@@ -113,36 +113,60 @@ func generateParagraph(para *docs.Paragraph) (string, error) {
 	elems := sortedElems(para.Elements)
 	sort.Sort(elems)
 
+	first := true
+
 	for _, elem := range para.Elements {
-		elemRes, err := generateParagraphElement(elem)
+		if elem.TextRun == nil || strings.TrimSpace(elem.TextRun.Content) == "" {
+			continue
+		}
+
+		elemRes, err := generateParagraphElement(elem, first)
 		if err != nil {
 			return res, err
 		}
+
+		first = false
 
 		res += elemRes
 	}
 
 	if para.Bullet == nil {
-		res += "\n"
+		res = strings.TrimSpace(res)
 	}
+
+	res += "\n"
 
 	return res, nil
 }
 
-func generateParagraphElement(elem *docs.ParagraphElement) (string, error) {
+func generateParagraphElement(elem *docs.ParagraphElement, first bool) (string, error) {
 	var res string
 
+	if strings.TrimSpace(elem.TextRun.Content) == "" {
+		return elem.TextRun.Content, nil
+	}
+
 	if elem.TextRun != nil {
-		if elem.TextRun.TextStyle != nil {
-			if elem.TextRun.TextStyle.Italic {
+		ts := elem.TextRun.TextStyle
+		if ts != nil {
+			if (ts.Bold || ts.Italic || ts.Link != nil) && !first {
+				res += " "
+			}
+
+			if ts.Italic {
 				res += "_"
 			}
-			if elem.TextRun.TextStyle.Bold {
+			if ts.Bold {
 				res += "**"
 			}
+
 		}
 
-		res += elem.TextRun.Content
+		if elem.TextRun.TextStyle.Link != nil {
+			res += "[" + strings.TrimSpace(elem.TextRun.Content) + "](" + elem.TextRun.TextStyle.Link.Url + ")"
+		} else {
+			res += strings.TrimSpace(elem.TextRun.Content)
+		}
 
 		if elem.TextRun.TextStyle != nil {
 			if elem.TextRun.TextStyle.Bold {
@@ -150,6 +174,10 @@ func generateParagraphElement(elem *docs.ParagraphElement) (string, error) {
 			}
 			if elem.TextRun.TextStyle.Italic {
 				res += "_"
+			}
+
+			if ts.Bold || ts.Italic {
+				res += " "
 			}
 		}
 	}
