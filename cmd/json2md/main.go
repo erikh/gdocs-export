@@ -44,41 +44,82 @@ func generateNode(node *docs.StructuralElement, start, end int64) (string, error
 	var res string
 
 	if node.Paragraph != nil {
-		switch node.Paragraph.ParagraphStyle.NamedStyleType {
-		case "HEADING_1":
-			res += "# "
-		case "HEADING_2":
-			res += "## "
-		case "HEADING_3":
-			res += "### "
-		case "HEADING_4":
-			res += "#### "
-		case "HEADING_5":
-			res += "##### "
-		case "HEADING_6":
-			res += "###### "
+		paraRes, err := generateParagraph(node.Paragraph)
+		if err != nil {
+			return res, err
 		}
 
-		if node.Paragraph.Bullet != nil {
-			res += strings.Repeat("  ", int(node.Paragraph.Bullet.NestingLevel))
-			res += "* "
+		res += paraRes
+	}
+
+	if node.Table != nil {
+		tableRes, err := generateTable(node.Table)
+		if err != nil {
+			return res, err
 		}
 
-		elems := sortedElems(node.Paragraph.Elements)
-		sort.Sort(elems)
+		res += tableRes
+	}
 
-		for _, elem := range node.Paragraph.Elements {
-			elemRes, err := generateParagraphElement(elem)
-			if err != nil {
-				return res, err
+	return res, nil
+}
+
+func generateTable(table *docs.Table) (string, error) {
+	var res string
+	for _, row := range table.TableRows {
+		for _, cell := range row.TableCells {
+			for _, node := range cell.Content {
+				cellRes, err := generateNode(node, cell.StartIndex, cell.EndIndex)
+				if err != nil {
+					return res, err
+				}
+
+				res += "|" + strings.TrimSpace(cellRes)
 			}
-
-			res += elemRes
 		}
 
-		if node.Paragraph.Bullet == nil {
-			res += "\n"
+		res += "|\n"
+	}
+
+	return res, nil
+}
+
+func generateParagraph(para *docs.Paragraph) (string, error) {
+	var res string
+	switch para.ParagraphStyle.NamedStyleType {
+	case "HEADING_1":
+		res += "# "
+	case "HEADING_2":
+		res += "## "
+	case "HEADING_3":
+		res += "### "
+	case "HEADING_4":
+		res += "#### "
+	case "HEADING_5":
+		res += "##### "
+	case "HEADING_6":
+		res += "###### "
+	}
+
+	if para.Bullet != nil {
+		res += strings.Repeat("  ", int(para.Bullet.NestingLevel))
+		res += "* "
+	}
+
+	elems := sortedElems(para.Elements)
+	sort.Sort(elems)
+
+	for _, elem := range para.Elements {
+		elemRes, err := generateParagraphElement(elem)
+		if err != nil {
+			return res, err
 		}
+
+		res += elemRes
+	}
+
+	if para.Bullet == nil {
+		res += "\n"
 	}
 
 	return res, nil
