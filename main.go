@@ -67,6 +67,11 @@ func saveToken(path string, token *oauth2.Token) {
 }
 
 func main() {
+	if len(os.Args) != 2 {
+		fmt.Fprintln(os.Stderr, "Please provide a docID (obtainable from the URL) and provide it to this command.")
+		os.Exit(1)
+	}
+
 	b, err := ioutil.ReadFile("credentials.json")
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
@@ -86,7 +91,9 @@ func main() {
 
 	// Prints the title of the requested doc:
 	// https://docs.google.com/document/d/195j9eDD3ccgjQRttHhJPymLJUCOUjs-jmwTrekvdjFE/edit
-	docID := "195j9eDD3ccgjQRttHhJPymLJUCOUjs-jmwTrekvdjFE"
+	//docID := "195j9eDD3ccgjQRttHhJPymLJUCOUjs-jmwTrekvdjFE"
+	// docID := "1Pa63BsGKuxpgdzVhPqfkc8D2RpsU6qZovqZwPjfKWfY"
+	docID := os.Args[1]
 
 	doc, err := srv.Documents.Get(docID).Do()
 	if err != nil {
