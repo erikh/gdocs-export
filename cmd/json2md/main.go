@@ -65,8 +65,10 @@ func generateNode(node *docs.StructuralElement, start, end int64) (string, error
 }
 
 func generateTable(table *docs.Table) (string, error) {
-	var res string
+	res := "<table>\n"
+
 	for _, row := range table.TableRows {
+		res += "\t<tr>\n"
 		for _, cell := range row.TableCells {
 			for _, node := range cell.Content {
 				cellRes, err := generateNode(node, cell.StartIndex, cell.EndIndex)
@@ -74,12 +76,14 @@ func generateTable(table *docs.Table) (string, error) {
 					return res, err
 				}
 
-				res += "|" + strings.TrimSpace(cellRes)
+				res += "\t\t<td>" + strings.TrimSpace(cellRes) + "</td>\n"
 			}
 		}
 
-		res += "|\n"
+		res += "\t</tr>\n"
 	}
+
+	res += "</table>\n"
 
 	return res, nil
 }
