@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/erikh/gdocs-export/pkg/cli"
+	"github.com/erikh/gdocs-export/pkg/downloader"
 	"github.com/erikh/gdocs-export/pkg/oauth2"
 	"google.golang.org/api/docs/v1"
 )
@@ -49,4 +50,15 @@ func main() {
 	}
 
 	fmt.Println(string(content))
+
+	if os.Getenv("DOWNLOAD") != "" {
+		a, err := downloader.New(client)
+		if err != nil {
+			cli.ErrExit("%v", err)
+		}
+
+		if err := a.Download(os.Getenv("DOWNLOAD"), doc); err != nil {
+			cli.ErrExit("trouble downloading: %v", err)
+		}
+	}
 }
