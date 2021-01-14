@@ -86,24 +86,7 @@ func action(ctx *cli.Context) error {
 		return fmt.Errorf("Unable to retrieve data from document: %v", err)
 	}
 
-	switch conv := ctx.String("convert"); conv {
-	case "md":
-		res, err := converters.Markdown(doc)
-		if err != nil {
-			return fmt.Errorf("Unable to produce markdown: %v", err)
-		}
-
-		fmt.Println(res)
-	case "":
-		content, err := doc.MarshalJSON()
-		if err != nil {
-			return fmt.Errorf("Unable to marshal json: %v", err)
-		}
-
-		fmt.Println(string(content))
-	default:
-		return fmt.Errorf("%q is an invalid format. Try `-c help`", conv)
-	}
+	fmt.Fprintln(os.Stderr, "Downloading assets (this can take a bit)")
 
 	if ctx.Bool("download") {
 		a, err := downloader.New(client)
@@ -125,6 +108,25 @@ func action(ctx *cli.Context) error {
 		if err := ioutil.WriteFile(filepath.Join(dl, "manifest.json"), manifest, 0600); err != nil {
 			return fmt.Errorf("Error writing manifest to %q: %v", dl, err)
 		}
+	}
+
+	switch conv := ctx.String("convert"); conv {
+	case "md":
+		res, err := converters.Markdown(doc)
+		if err != nil {
+			return fmt.Errorf("Unable to produce markdown: %v", err)
+		}
+
+		fmt.Println(res)
+	case "":
+		content, err := doc.MarshalJSON()
+		if err != nil {
+			return fmt.Errorf("Unable to marshal json: %v", err)
+		}
+
+		fmt.Println(string(content))
+	default:
+		return fmt.Errorf("%q is an invalid format. Try `-c help`", conv)
 	}
 
 	return nil
