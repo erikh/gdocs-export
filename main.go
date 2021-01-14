@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,6 +14,11 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/docs/v1"
 )
+
+func errExit(f string, items ...interface{}) {
+	fmt.Fprintf(os.Stderr, f, items...)
+	os.Exit(1)
+}
 
 // Retrieves a token, saves the token, then returns the generated client.
 func getClient(config *oauth2.Config) *http.Client {
@@ -35,12 +39,12 @@ func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 
 	var authCode string
 	if _, err := fmt.Scan(&authCode); err != nil {
-		log.Fatalf("Unable to read authorization code: %v", err)
+		errExit("Unable to read authorization code: %v", err)
 	}
 
 	tok, err := config.Exchange(oauth2.NoContext, authCode)
 	if err != nil {
-		log.Fatalf("Unable to retrieve token from web: %v", err)
+		errExit("Unable to retrieve token from web: %v", err)
 	}
 	return tok
 }
@@ -63,7 +67,7 @@ func saveToken(path string, token *oauth2.Token) {
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	defer f.Close()
 	if err != nil {
-		log.Fatalf("Unable to cache OAuth token: %v", err)
+		errExit("Unable to cache OAuth token: %v", err)
 	}
 	json.NewEncoder(f).Encode(token)
 }
@@ -76,29 +80,29 @@ func main() {
 
 	b, err := ioutil.ReadFile("credentials.json")
 	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
+		errExit("Unable to read client secret file: %v", err)
 	}
 
 	// If modifying these scopes, delete your previously saved token.json.
 	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/documents.readonly")
 	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
+		errExit("Unable to parse client secret file to config: %v", err)
 	}
 	client := getClient(config)
 
 	srv, err := docs.New(client)
 	if err != nil {
-		log.Fatalf("Unable to retrieve Docs client: %v", err)
+		errExit("Unable to retrieve Docs client: %v", err)
 	}
 
 	u, err := url.Parse(os.Args[1])
 	if err != nil {
-		log.Fatalf("Unable to parse url: %v", err)
+		errExit("Unable to parse url: %v", err)
 	}
 
 	parts := strings.Split(u.Path, "/")
 	if len(parts) < 4 {
-		log.Fatalf("Invalid URL, cannot parse docID properly")
+		errExit("Invalid URL, cannot parse docID properly")
 	}
 
 	docID := parts[3]
@@ -107,12 +111,12 @@ func main() {
 
 	doc, err := srv.Documents.Get(docID).Do()
 	if err != nil {
-		log.Fatalf("Unable to retrieve data from document: %v", err)
+		errExit("Unable to retrieve data from document: %v", err)
 	}
 
 	content, err := doc.MarshalJSON()
 	if err != nil {
-		log.Fatal(err)
+		errExit("Unable to marshal json: %v", err)
 	}
 
 	fmt.Println(string(content))
