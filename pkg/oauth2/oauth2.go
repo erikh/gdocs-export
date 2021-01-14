@@ -4,15 +4,28 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 
 	"github.com/erikh/gdocs-export/pkg/cli"
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 // GetClient retrieves a token, saves the token, then returns the generated client.
-func GetClient(config *oauth2.Config) *http.Client {
+func GetClient() *http.Client {
+	b, err := ioutil.ReadFile("credentials.json")
+	if err != nil {
+		cli.ErrExit("Unable to read client secret file: %v", err)
+	}
+
+	// If modifying these scopes, delete your previously saved token.json.
+	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/documents.readonly")
+	if err != nil {
+		cli.ErrExit("Unable to parse client secret file to config: %v", err)
+	}
+
 	tokFile := "token.json"
 	tok, err := tokenFromFile(tokFile)
 	if err != nil {
