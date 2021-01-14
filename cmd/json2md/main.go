@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/erikh/gdocs-export/pkg/cli"
 	"google.golang.org/api/docs/v1"
 )
 
@@ -14,12 +15,12 @@ func main() {
 	var doc docs.Document
 
 	if err := json.NewDecoder(os.Stdin).Decode(&doc); err != nil {
-		panic(err)
+		cli.ErrExit("Could not decode input as JSON: %v", err)
 	}
 
 	res, err := generateMD(&doc)
 	if err != nil {
-		panic(err)
+		cli.ErrExit("Trouble generating markdown: %v", err)
 	}
 
 	fmt.Println(res)
