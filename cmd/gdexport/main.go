@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -22,37 +24,109 @@ func main() {
 	app.Authors = []*cli.Author{{Email: "github@hollensbe.org", Name: "Erik Hollensbe"}}
 	app.Usage = "Fetch google docs and (optionally) convert them to markup formats"
 
-	app.Flags = []cli.Flag{
-		&cli.StringFlag{
-			Name:    "assets-dir",
-			Aliases: []string{"a"},
-			Usage:   "Where to put downloaded assets",
-			Value:   "./assets",
+	app.Commands = []*cli.Command{
+		{
+			Name:      "fetch",
+			Usage:     "Download the document and (optionally) convert it",
+			ArgsUsage: "[gdocs url]",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "assets-dir",
+					Aliases: []string{"a"},
+					Usage:   "Where to put downloaded assets",
+					Value:   "./assets",
+				},
+				&cli.BoolFlag{
+					Name:    "download",
+					Aliases: []string{"d", "dl"},
+					Usage:   "Whether or not to download assets",
+				},
+				&cli.StringFlag{
+					Name:    "convert",
+					Aliases: []string{"c"},
+					Usage:   "Convert to various formats; -c help for more",
+				},
+			},
+			Action: fetch,
 		},
-		&cli.BoolFlag{
-			Name:    "download",
-			Aliases: []string{"d", "dl"},
-			Usage:   "Whether or not to download assets",
-		},
-		&cli.StringFlag{
-			Name:    "convert",
-			Aliases: []string{"c"},
-			Usage:   "Convert to various formats; -c help for more",
+		{
+			Name:      "convert",
+			Usage:     "Convert an already-downloaded document from JSON",
+			ArgsUsage: "[format] [filename]",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "assets-dir",
+					Aliases: []string{"a"},
+					Usage:   "Where downloaded assets are kept (must exist already, with a manifest.json present)",
+				},
+			},
+			Action: convert,
 		},
 	}
-
-	app.Action = action
 
 	if err := app.Run(os.Args); err != nil {
 		intCLI.ErrExit("Error: %v", err)
 	}
 }
 
-func action(ctx *cli.Context) error {
+func convertFormatHelp() {
+	fmt.Println("Formats supported:")
+	fmt.Println("md")
+	os.Exit(0)
+}
+
+func convert(ctx *cli.Context) error {
+	if ctx.Args().Get(0) == "help" {
+		convertFormatHelp()
+	}
+
+	if ctx.Args().Len() != 2 {
+		return errors.New("invalid arguments; see --help")
+	}
+
+	f, err := os.Open(ctx.Args().Get(1))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	var doc docs.Document
+
+	if err := json.NewDecoder(f).Decode(&doc); err != nil {
+		return err
+	}
+
+	manifest := downloader.Manifest{}
+
+	if ctx.String("assets-dir") != "" {
+		m, err := os.Open(filepath.Join(ctx.String("assets-dir"), "manifest.json"))
+		if err != nil {
+			return err
+		}
+
+		if err := json.NewDecoder(m).Decode(&manifest); err != nil {
+			return err
+		}
+	}
+
+	switch conv := ctx.Args().Get(0); conv {
+	case "md":
+		res, err := converters.Markdown(&doc, manifest)
+		if err != nil {
+			return fmt.Errorf("Unable to produce markdown: %v", err)
+		}
+
+		fmt.Println(res)
+	default:
+		return fmt.Errorf("%q is an invalid format. Try `-c help`", conv)
+	}
+
+	return nil
+}
+
+func fetch(ctx *cli.Context) error {
 	if ctx.String("convert") == "help" {
-		fmt.Println("Formats supported:")
-		fmt.Println("md")
-		os.Exit(0)
+		convertFormatHelp()
 	}
 
 	if ctx.Args().Len() != 1 {
