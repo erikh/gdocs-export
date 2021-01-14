@@ -88,12 +88,12 @@ func action(ctx *cli.Context) error {
 
 	fmt.Fprintln(os.Stderr, "Downloading assets (this can take a bit)")
 
-	if ctx.Bool("download") {
-		a, err := downloader.New(client)
-		if err != nil {
-			return fmt.Errorf("%v", err)
-		}
+	a, err := downloader.New(client)
+	if err != nil {
+		return fmt.Errorf("%v", err)
+	}
 
+	if ctx.Bool("download") {
 		dl := ctx.String("assets-dir")
 
 		if err := a.Download(dl, doc); err != nil {
@@ -112,7 +112,7 @@ func action(ctx *cli.Context) error {
 
 	switch conv := ctx.String("convert"); conv {
 	case "md":
-		res, err := converters.Markdown(doc)
+		res, err := converters.Markdown(doc, a.Manifest())
 		if err != nil {
 			return fmt.Errorf("Unable to produce markdown: %v", err)
 		}

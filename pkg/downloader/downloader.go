@@ -40,12 +40,17 @@ func (a *Agent) Download(dir string, doc *docs.Document) error {
 	}
 
 	for id, obj := range doc.InlineObjects {
-		if err := a.fetch(id, dir, obj.InlineObjectProperties.EmbeddedObject.ImageProperties.ContentUri); err != nil {
+		if err := a.fetch(obj.ObjectId, dir, obj.InlineObjectProperties.EmbeddedObject.ImageProperties.ContentUri); err != nil {
 			return fmt.Errorf("%q: %w", id, err)
 		}
 	}
 
 	return nil
+}
+
+// Manifest returns the manifest
+func (a *Agent) Manifest() Manifest {
+	return a.idFileMap
 }
 
 // ManifestJSON returns the manifest is JSON form
@@ -79,7 +84,9 @@ func (a *Agent) fetch(id, dir, url string) error {
 		fn += exts[0]
 	}
 
-	f, err := os.Create(filepath.Join(dir, fn))
+	fn = filepath.Join(dir, fn)
+
+	f, err := os.Create(fn)
 	if err != nil {
 		return fmt.Errorf("could not create file %q: %w", fn, err)
 	}
