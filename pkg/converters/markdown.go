@@ -12,7 +12,7 @@ func Markdown(doc *docs.Document) (string, error) {
 	var res string
 
 	for _, node := range doc.Body.Content {
-		nodeRes, err := generateNode(node, node.StartIndex, node.EndIndex)
+		nodeRes, err := generateNode(node)
 		if err != nil {
 			return "", err
 		}
@@ -23,7 +23,7 @@ func Markdown(doc *docs.Document) (string, error) {
 	return res, nil
 }
 
-func generateNode(node *docs.StructuralElement, start, end int64) (string, error) {
+func generateNode(node *docs.StructuralElement) (string, error) {
 	var res string
 
 	if node.Paragraph != nil {
@@ -54,7 +54,7 @@ func generateTable(table *docs.Table) (string, error) {
 		res += "\t<tr>\n"
 		for _, cell := range row.TableCells {
 			for _, node := range cell.Content {
-				cellRes, err := generateNode(node, cell.StartIndex, cell.EndIndex)
+				cellRes, err := generateNode(node)
 				if err != nil {
 					return res, err
 				}
