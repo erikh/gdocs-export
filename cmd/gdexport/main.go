@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	intCLI "github.com/erikh/gdocs-export/pkg/cli"
+	"github.com/erikh/gdocs-export/pkg/converters"
 	"github.com/erikh/gdocs-export/pkg/downloader"
 	"github.com/erikh/gdocs-export/pkg/oauth2"
 	"github.com/urfave/cli/v2"
@@ -33,6 +34,11 @@ func main() {
 			Aliases: []string{"d", "dl"},
 			Usage:   "Whether or not to download assets",
 		},
+		&cli.StringFlag{
+			Name:    "convert",
+			Aliases: []string{"c"},
+			Usage:   "Convert to various formats; -c help for more",
+		},
 	}
 
 	app.Action = action
@@ -43,6 +49,12 @@ func main() {
 }
 
 func action(ctx *cli.Context) error {
+	if ctx.String("convert") == "help" {
+		fmt.Println("Formats supported:")
+		fmt.Println("md")
+		os.Exit(0)
+	}
+
 	if ctx.Args().Len() != 1 {
 		fmt.Fprintln(os.Stderr, "Please provide a google docs url to this command.")
 		os.Exit(1)
@@ -52,7 +64,7 @@ func action(ctx *cli.Context) error {
 
 	srv, err := docs.New(client)
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve Docs intCLIent: %v", err)
+		return fmt.Errorf("Unable to retrieve Docs client: %v", err)
 	}
 
 	u, err := url.Parse(ctx.Args().First())
@@ -74,12 +86,24 @@ func action(ctx *cli.Context) error {
 		return fmt.Errorf("Unable to retrieve data from document: %v", err)
 	}
 
-	content, err := doc.MarshalJSON()
-	if err != nil {
-		return fmt.Errorf("Unable to marshal json: %v", err)
-	}
+	switch conv := ctx.String("convert"); conv {
+	case "md":
+		res, err := converters.Markdown(doc)
+		if err != nil {
+			return fmt.Errorf("Unable to produce markdown: %v", err)
+		}
 
-	fmt.Println(string(content))
+		fmt.Println(res)
+	case "":
+		content, err := doc.MarshalJSON()
+		if err != nil {
+			return fmt.Errorf("Unable to marshal json: %v", err)
+		}
+
+		fmt.Println(string(content))
+	default:
+		return fmt.Errorf("%q is an invalid format. Try `-c help`", conv)
+	}
 
 	if ctx.Bool("download") {
 		a, err := downloader.New(client)
