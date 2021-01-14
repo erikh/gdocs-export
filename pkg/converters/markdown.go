@@ -25,6 +25,25 @@ func Markdown(doc *docs.Document, manifest downloader.Manifest) (string, error) 
 	return res, nil
 }
 
+// taken from golang.org/x/tools/cmd/present2md and hacked up
+func markdownEscape(s string) string {
+	var b strings.Builder
+	for i, r := range s {
+		switch {
+		case r == '#' && (i == 0 || s[i-1] == '\n'),
+			r == '*',
+			r == '_',
+			r == '<' && (i == 0 || s[i-1] != ' ') && i+1 < len(s) && s[i+1] != ' ',
+			r == '[' && strings.Contains(s[i:], "]("):
+			b.WriteRune('\\')
+		}
+
+		b.WriteRune(r)
+	}
+
+	return b.String()
+}
+
 func generateNode(node *docs.StructuralElement, manifest downloader.Manifest) (string, error) {
 	var res string
 
@@ -115,10 +134,6 @@ func generateParagraph(para *docs.Paragraph, manifest downloader.Manifest) (stri
 		res += elemRes
 	}
 
-	if para.Bullet == nil {
-		res = strings.TrimSpace(res)
-	}
-
 	res += "\n"
 
 	return res, nil
@@ -138,10 +153,6 @@ func generateParagraphElement(elem *docs.ParagraphElement, first bool, manifest 
 		return res, nil
 	}
 
-	if strings.TrimSpace(elem.TextRun.Content) == "" {
-		return elem.TextRun.Content, nil
-	}
-
 	if elem.TextRun != nil {
 		ts := elem.TextRun.TextStyle
 		if ts != nil {
@@ -159,9 +170,9 @@ func generateParagraphElement(elem *docs.ParagraphElement, first bool, manifest 
 		}
 
 		if elem.TextRun.TextStyle.Link != nil {
-			res += "[" + strings.TrimSpace(elem.TextRun.Content) + "](" + elem.TextRun.TextStyle.Link.Url + ")"
+			res += "[" + strings.TrimSpace(markdownEscape(elem.TextRun.Content)) + "](" + elem.TextRun.TextStyle.Link.Url + ")"
 		} else {
-			res += strings.TrimSpace(elem.TextRun.Content)
+			res += markdownEscape(strings.Replace(elem.TextRun.Content, "\u000b", "\n", -1))
 		}
 
 		if elem.TextRun.TextStyle != nil {
