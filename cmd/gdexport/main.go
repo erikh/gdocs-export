@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/erikh/gdocs-export/pkg/cli"
@@ -51,14 +53,25 @@ func main() {
 
 	fmt.Println(string(content))
 
-	if os.Getenv("DOWNLOAD") != "" {
+	dl := os.Getenv("DOWNLOAD")
+
+	if dl != "" {
 		a, err := downloader.New(client)
 		if err != nil {
 			cli.ErrExit("%v", err)
 		}
 
-		if err := a.Download(os.Getenv("DOWNLOAD"), doc); err != nil {
+		if err := a.Download(dl, doc); err != nil {
 			cli.ErrExit("trouble downloading: %v", err)
+		}
+
+		manifest, err := a.ManifestJSON()
+		if err != nil {
+			cli.ErrExit("Error marshalling manifest: %v", err)
+		}
+
+		if err := ioutil.WriteFile(filepath.Join(dl, "manifest.json"), manifest, 0600); err != nil {
+			cli.ErrExit("Error writing manifest: %v", err)
 		}
 	}
 }

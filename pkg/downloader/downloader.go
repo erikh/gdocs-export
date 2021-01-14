@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,17 +13,22 @@ import (
 	"google.golang.org/api/docs/v1"
 )
 
+// Manifest is just an object ID -> filename mapping.
+type Manifest map[string]string
+
 // Agent is a new downloader agent. It will ingest the document's assets and
 // download them.
 type Agent struct {
-	client *http.Client
+	client    *http.Client
+	idFileMap Manifest
 }
 
 // New creates a new agent for use. The HTTP client provided must have oauth2
 // capabilities.
 func New(client *http.Client) (*Agent, error) {
 	return &Agent{
-		client: client,
+		client:    client,
+		idFileMap: Manifest{},
 	}, nil
 }
 
@@ -40,6 +46,11 @@ func (a *Agent) Download(dir string, doc *docs.Document) error {
 	}
 
 	return nil
+}
+
+// ManifestJSON returns the manifest is JSON form
+func (a *Agent) ManifestJSON() ([]byte, error) {
+	return json.Marshal(a.idFileMap)
 }
 
 func (a *Agent) fetch(id, dir, url string) error {
@@ -83,5 +94,6 @@ func (a *Agent) fetch(id, dir, url string) error {
 		return fmt.Errorf("Short read copying file")
 	}
 
+	a.idFileMap[id] = fn
 	return nil
 }
