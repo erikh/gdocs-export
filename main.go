@@ -7,7 +7,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -68,7 +70,7 @@ func saveToken(path string, token *oauth2.Token) {
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Fprintln(os.Stderr, "Please provide a docID (obtainable from the URL) and provide it to this command.")
+		fmt.Fprintln(os.Stderr, "Please provide a google docs url to this command.")
 		os.Exit(1)
 	}
 
@@ -89,11 +91,19 @@ func main() {
 		log.Fatalf("Unable to retrieve Docs client: %v", err)
 	}
 
-	// Prints the title of the requested doc:
-	// https://docs.google.com/document/d/195j9eDD3ccgjQRttHhJPymLJUCOUjs-jmwTrekvdjFE/edit
-	//docID := "195j9eDD3ccgjQRttHhJPymLJUCOUjs-jmwTrekvdjFE"
-	// docID := "1Pa63BsGKuxpgdzVhPqfkc8D2RpsU6qZovqZwPjfKWfY"
-	docID := os.Args[1]
+	u, err := url.Parse(os.Args[1])
+	if err != nil {
+		log.Fatalf("Unable to parse url: %v", err)
+	}
+
+	parts := strings.Split(u.Path, "/")
+	if len(parts) < 4 {
+		log.Fatalf("Invalid URL, cannot parse docID properly")
+	}
+
+	docID := parts[3]
+
+	fmt.Fprintln(os.Stderr, "Fetching docID", docID)
 
 	doc, err := srv.Documents.Get(docID).Do()
 	if err != nil {
@@ -102,7 +112,7 @@ func main() {
 
 	content, err := doc.MarshalJSON()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	fmt.Println(string(content))
