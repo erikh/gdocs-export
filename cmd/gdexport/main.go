@@ -109,18 +109,12 @@ func convert(ctx *cli.Context) error {
 		}
 	}
 
-	switch conv := ctx.Args().Get(0); conv {
-	case "md":
-		res, err := converters.NewMarkdown().Convert(converters.NewPayload(&doc, manifest))
-		if err != nil {
-			return fmt.Errorf("Unable to produce markdown: %v", err)
-		}
-
-		fmt.Println(res)
-	default:
-		return fmt.Errorf("%q is an invalid format. Try `-c help`", conv)
+	res, err := converters.Convert(ctx.Args().Get(0), &doc, manifest)
+	if err != nil {
+		return err
 	}
 
+	fmt.Println(res)
 	return nil
 }
 
@@ -184,23 +178,20 @@ func fetch(ctx *cli.Context) error {
 		}
 	}
 
-	switch conv := ctx.String("convert"); conv {
-	case "md":
-		res, err := converters.NewMarkdown().Convert(converters.NewPayload(doc, a.Manifest()))
-		if err != nil {
-			return fmt.Errorf("Unable to produce markdown: %v", err)
-		}
-
-		fmt.Println(res)
-	case "":
+	if ctx.String("convert") == "" {
 		content, err := doc.MarshalJSON()
 		if err != nil {
 			return fmt.Errorf("Unable to marshal json: %v", err)
 		}
 
 		fmt.Println(string(content))
-	default:
-		return fmt.Errorf("%q is an invalid format. Try `-c help`", conv)
+	} else {
+		res, err := converters.Convert(ctx.String("convert"), doc, a.Manifest())
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(res)
 	}
 
 	return nil
