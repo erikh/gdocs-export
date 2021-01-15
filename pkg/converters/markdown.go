@@ -2,6 +2,7 @@ package converters
 
 import (
 	"fmt"
+	"html"
 	"sort"
 	"strings"
 
@@ -42,7 +43,7 @@ func markdownEscape(s string) string {
 		b.WriteRune(r)
 	}
 
-	return strings.TrimLeft(b.String(), " ")
+	return strings.TrimLeft(html.EscapeString(b.String()), " ")
 }
 
 func generateNode(node *docs.StructuralElement, manifest downloader.Manifest) (string, error) {
