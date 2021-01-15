@@ -6,16 +6,30 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/erikh/gdocs-export/pkg/downloader"
 	"google.golang.org/api/docs/v1"
 )
 
 // Markdown generates a markdown representation from the gdocs document.
-func Markdown(doc *docs.Document, manifest downloader.Manifest) (string, error) {
+type Markdown struct {
+	payload Payload
+}
+
+// NewMarkdown creates a new *Markdown for use.
+func NewMarkdown() *Markdown {
+	return &Markdown{}
+}
+
+// Convert performs the conversion
+func (md *Markdown) Convert(p Payload) (string, error) {
+	md.payload = p
+	return md.convert()
+}
+
+func (md *Markdown) convert() (string, error) {
 	var res string
 
-	for _, node := range doc.Body.Content {
-		nodeRes, err := generateNode(node, manifest)
+	for _, node := range md.payload.doc.Body.Content {
+		nodeRes, err := md.generateNode(node)
 		if err != nil {
 			return "", err
 		}
@@ -46,11 +60,11 @@ func markdownEscape(s string) string {
 	return strings.TrimLeft(html.EscapeString(b.String()), " ")
 }
 
-func generateNode(node *docs.StructuralElement, manifest downloader.Manifest) (string, error) {
+func (md *Markdown) generateNode(node *docs.StructuralElement) (string, error) {
 	var res string
 
 	if node.Paragraph != nil {
-		paraRes, err := generateParagraph(node.Paragraph, manifest)
+		paraRes, err := md.generateParagraph(node.Paragraph)
 		if err != nil {
 			return res, err
 		}
@@ -59,7 +73,7 @@ func generateNode(node *docs.StructuralElement, manifest downloader.Manifest) (s
 	}
 
 	if node.Table != nil {
-		tableRes, err := generateTable(node.Table, manifest)
+		tableRes, err := md.generateTable(node.Table)
 		if err != nil {
 			return res, err
 		}
@@ -70,14 +84,14 @@ func generateNode(node *docs.StructuralElement, manifest downloader.Manifest) (s
 	return res, nil
 }
 
-func generateTable(table *docs.Table, manifest downloader.Manifest) (string, error) {
+func (md *Markdown) generateTable(table *docs.Table) (string, error) {
 	res := "<table>\n"
 
 	for _, row := range table.TableRows {
 		res += "\t<tr>\n"
 		for _, cell := range row.TableCells {
 			for _, node := range cell.Content {
-				cellRes, err := generateNode(node, manifest)
+				cellRes, err := md.generateNode(node)
 				if err != nil {
 					return res, err
 				}
@@ -94,7 +108,7 @@ func generateTable(table *docs.Table, manifest downloader.Manifest) (string, err
 	return res, nil
 }
 
-func generateParagraph(para *docs.Paragraph, manifest downloader.Manifest) (string, error) {
+func (md *Markdown) generateParagraph(para *docs.Paragraph) (string, error) {
 	var res string
 	switch para.ParagraphStyle.NamedStyleType {
 	case "HEADING_1":
@@ -126,7 +140,7 @@ func generateParagraph(para *docs.Paragraph, manifest downloader.Manifest) (stri
 			continue
 		}
 
-		elemRes, err := generateParagraphElement(elem, first, manifest)
+		elemRes, err := md.generateParagraphElement(elem, first)
 		if err != nil {
 			return res, err
 		}
@@ -144,12 +158,12 @@ func generateParagraph(para *docs.Paragraph, manifest downloader.Manifest) (stri
 	return res, nil
 }
 
-func generateParagraphElement(elem *docs.ParagraphElement, first bool, manifest downloader.Manifest) (string, error) {
+func (md *Markdown) generateParagraphElement(elem *docs.ParagraphElement, first bool) (string, error) {
 	var res string
 
 	if elem.InlineObjectElement != nil {
 		obj := elem.InlineObjectElement
-		if filename, ok := manifest[obj.InlineObjectId]; ok {
+		if filename, ok := md.payload.manifest[obj.InlineObjectId]; ok {
 			res += fmt.Sprintf("<img src=%q />", filename)
 		}
 	}

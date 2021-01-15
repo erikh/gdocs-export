@@ -111,7 +111,7 @@ func convert(ctx *cli.Context) error {
 
 	switch conv := ctx.Args().Get(0); conv {
 	case "md":
-		res, err := converters.Markdown(&doc, manifest)
+		res, err := converters.NewMarkdown().Convert(converters.NewPayload(&doc, manifest))
 		if err != nil {
 			return fmt.Errorf("Unable to produce markdown: %v", err)
 		}
@@ -186,7 +186,7 @@ func fetch(ctx *cli.Context) error {
 
 	switch conv := ctx.String("convert"); conv {
 	case "md":
-		res, err := converters.Markdown(doc, a.Manifest())
+		res, err := converters.NewMarkdown().Convert(converters.NewPayload(doc, a.Manifest()))
 		if err != nil {
 			return fmt.Errorf("Unable to produce markdown: %v", err)
 		}
