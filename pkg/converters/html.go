@@ -134,26 +134,25 @@ func (h *HTML) generateParagraph(para *docs.Paragraph) (string, error) {
 	elems := sortedElems(para.Elements)
 	sort.Sort(elems)
 
-	first := true
-
 	for _, elem := range para.Elements {
 		if elem.InlineObjectElement == nil && (elem.TextRun == nil || strings.TrimSpace(elem.TextRun.Content) == "") {
 			continue
 		}
 
-		elemRes, err := h.generateParagraphElement(elem, first)
+		elemRes, err := h.generateParagraphElement(elem)
 		if err != nil {
 			return res, err
 		}
 
-		er := strings.TrimSpace(elemRes)
-
-		if !first && er != "" && er[len(er)-1] != '>' && res[len(res)-1] != '>' {
-			res += " "
+		if elemRes != "" && !h.code {
+			switch elemRes[len(elemRes)-1] {
+			case '>', ' ':
+			default:
+				elemRes += " "
+			}
 		}
 
 		res += elemRes
-		first = false
 	}
 
 	if h.code {
@@ -186,7 +185,7 @@ func (h *HTML) generateParagraph(para *docs.Paragraph) (string, error) {
 	return res, nil
 }
 
-func (h *HTML) generateParagraphElement(elem *docs.ParagraphElement, first bool) (string, error) {
+func (h *HTML) generateParagraphElement(elem *docs.ParagraphElement) (string, error) {
 	var res string
 
 	if elem.InlineObjectElement != nil {
@@ -229,12 +228,10 @@ func (h *HTML) generateParagraphElement(elem *docs.ParagraphElement, first bool)
 		}
 
 		if ts.Bold {
-			res = strings.TrimRight(res, " ")
 			res += "</b>"
 		}
 
 		if ts.Italic {
-			res = strings.TrimRight(res, " ")
 			res += "</i>"
 		}
 	}
