@@ -9,11 +9,12 @@ import (
 	"google.golang.org/api/docs/v1"
 )
 
-// HTML generates a markdown representation from the gdocs document.
+// HTML generates a markdown recodesentation from the gdocs document.
 type HTML struct {
 	payload   Payload
 	nestLevel int64
 	nesting   bool
+	code      bool
 }
 
 // NewHTML creates a new *HTML for use.
@@ -145,12 +146,19 @@ func (h *HTML) generateParagraph(para *docs.Paragraph) (string, error) {
 			return res, err
 		}
 
-		if !first && strings.TrimSpace(elemRes) != "" {
+		er := strings.TrimSpace(elemRes)
+
+		if !first && er != "" && er[len(er)-1] != '>' && res[len(res)-1] != '>' {
 			res += " "
 		}
 
 		res += elemRes
 		first = false
+	}
+
+	if h.code {
+		res += "</code>"
+		h.code = false
 	}
 
 	if para.Bullet != nil {
@@ -192,35 +200,42 @@ func (h *HTML) generateParagraphElement(elem *docs.ParagraphElement, first bool)
 		return res, nil
 	}
 
-	if elem.TextRun != nil {
-		ts := elem.TextRun.TextStyle
-		if ts != nil {
-			if ts.Italic {
-				res += "<i>"
-			}
-
-			if ts.Bold {
-				res += "<b>"
-			}
-
+	ts := elem.TextRun.TextStyle
+	if ts != nil {
+		if ts.Italic {
+			res += "<i>"
 		}
 
-		if elem.TextRun.TextStyle.Link != nil {
-			res += fmt.Sprintf("<a href=%q>%s</a>", elem.TextRun.TextStyle.Link.Url, html.EscapeString(elem.TextRun.Content))
-		} else {
-			res += html.EscapeString(elem.TextRun.Content)
+		if ts.Bold {
+			res += "<b>"
 		}
 
-		if ts != nil {
-			if ts.Bold {
-				res = strings.TrimRight(res, " ")
-				res += "</b>"
-			}
+		if ts.WeightedFontFamily != nil && ts.WeightedFontFamily.FontFamily == "Consolas" && !h.code {
+			res += "<code>"
+			h.code = true
+		}
+	}
 
-			if ts.Italic {
-				res = strings.TrimRight(res, " ")
-				res += "</i>"
-			}
+	if elem.TextRun.TextStyle.Link != nil {
+		res += fmt.Sprintf("<a href=%q>%s</a>", elem.TextRun.TextStyle.Link.Url, html.EscapeString(elem.TextRun.Content))
+	} else {
+		res += html.EscapeString(elem.TextRun.Content)
+	}
+
+	if ts != nil {
+		if (ts.WeightedFontFamily == nil || ts.WeightedFontFamily.FontFamily != "Consolas") && h.code {
+			h.code = false
+			res += "</code>"
+		}
+
+		if ts.Bold {
+			res = strings.TrimRight(res, " ")
+			res += "</b>"
+		}
+
+		if ts.Italic {
+			res = strings.TrimRight(res, " ")
+			res += "</i>"
 		}
 	}
 
