@@ -20,6 +20,13 @@ func Convert(typ string, doc *docs.Document, manifest downloader.Manifest) (stri
 		}
 
 		return res, nil
+	case "html":
+		res, err := NewHTML().Convert(pl)
+		if err != nil {
+			return "", fmt.Errorf("Unable to produce HTML: %v", err)
+		}
+
+		return res, nil
 	default:
 		return "", fmt.Errorf("%q is an invalid format. Try `-c help`", typ)
 	}

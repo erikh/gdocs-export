@@ -3,3 +3,5 @@ credentials.json
 token.json
 even.json
 test.json
+age*.json
+*.html
