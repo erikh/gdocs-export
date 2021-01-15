@@ -197,7 +197,7 @@ func (h *HTML) generateParagraphElement(elem *docs.ParagraphElement) (string, er
 	if elem.InlineObjectElement != nil {
 		obj := elem.InlineObjectElement
 		if filename, ok := h.payload.manifest[obj.InlineObjectId]; ok {
-			res += fmt.Sprintf("<img src=%q />", filename)
+			res += fmt.Sprintf("<img src=%q height=%d width=%d />", filename.Filename, filename.Height, filename.Width)
 		}
 	}
 

@@ -13,8 +13,15 @@ import (
 	"google.golang.org/api/docs/v1"
 )
 
+// ManifestFile is a file with size data.
+type ManifestFile struct {
+	Filename string
+	Height   int64
+	Width    int64
+}
+
 // Manifest is just an object ID -> filename mapping.
-type Manifest map[string]string
+type Manifest map[string]ManifestFile
 
 // Agent is a new downloader agent. It will ingest the document's assets and
 // download them.
@@ -40,7 +47,7 @@ func (a *Agent) Download(dir string, doc *docs.Document) error {
 	}
 
 	for id, obj := range doc.InlineObjects {
-		if err := a.fetch(obj.ObjectId, dir, obj.InlineObjectProperties.EmbeddedObject.ImageProperties.ContentUri); err != nil {
+		if err := a.fetch(obj, dir); err != nil {
 			return fmt.Errorf("%q: %w", id, err)
 		}
 	}
@@ -58,8 +65,12 @@ func (a *Agent) ManifestJSON() ([]byte, error) {
 	return json.Marshal(a.idFileMap)
 }
 
-func (a *Agent) fetch(id, dir, url string) error {
-	resp, err := a.client.Get(url)
+func (a *Agent) fetch(obj docs.InlineObject, dir string) error {
+	if obj.InlineObjectProperties == nil || obj.InlineObjectProperties.EmbeddedObject == nil {
+		return nil
+	}
+
+	resp, err := a.client.Get(obj.InlineObjectProperties.EmbeddedObject.ImageProperties.ContentUri)
 	if err != nil {
 		return fmt.Errorf("while downloading: %w", err)
 	}
@@ -79,7 +90,7 @@ func (a *Agent) fetch(id, dir, url string) error {
 		return fmt.Errorf("gathering extensions for content-type: %w", err)
 	}
 
-	fn := id
+	fn := obj.ObjectId
 	if len(exts) > 0 {
 		fn += exts[0]
 	}
@@ -101,6 +112,11 @@ func (a *Agent) fetch(id, dir, url string) error {
 		return fmt.Errorf("Short read copying file")
 	}
 
-	a.idFileMap[id] = fn
+	a.idFileMap[obj.ObjectId] = ManifestFile{
+		Filename: fn,
+		Height:   int64(obj.InlineObjectProperties.EmbeddedObject.Size.Height.Magnitude),
+		Width:    int64(obj.InlineObjectProperties.EmbeddedObject.Size.Width.Magnitude),
+	}
+
 	return nil
 }
