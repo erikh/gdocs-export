@@ -164,7 +164,7 @@ func (md *Markdown) generateParagraphElement(elem *docs.ParagraphElement, first 
 	if elem.InlineObjectElement != nil {
 		obj := elem.InlineObjectElement
 		if filename, ok := md.payload.manifest[obj.InlineObjectId]; ok {
-			res += fmt.Sprintf("<img src=%q />", filename)
+			res += fmt.Sprintf("<img src=%q width=%d height=%d />", filename.Filename, filename.Width, filename.Height)
 		}
 	}
 
