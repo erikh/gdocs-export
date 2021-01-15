@@ -15,6 +15,7 @@ type HTML struct {
 	nestLevel int64
 	nesting   bool
 	code      bool
+	inPara    bool
 }
 
 // NewHTML creates a new *HTML for use.
@@ -38,7 +39,7 @@ func (h *HTML) convert() (string, error) {
 		}
 
 		if nodeRes != "" {
-			res += "<p>" + nodeRes + "</p>"
+			res += nodeRes
 		}
 	}
 
@@ -52,6 +53,10 @@ func (h *HTML) generateNode(node *docs.StructuralElement) (string, error) {
 		paraRes, err := h.generateParagraph(node.Paragraph)
 		if err != nil {
 			return res, err
+		}
+
+		if !h.inPara {
+			res += "<p>"
 		}
 
 		res += paraRes
@@ -126,8 +131,9 @@ func (h *HTML) generateParagraph(para *docs.Paragraph) (string, error) {
 			h.nestLevel = para.Bullet.NestingLevel
 		} else if para.Bullet.NestingLevel == 0 && !h.nesting {
 			res += "<ul>"
-			h.nesting = true
 		}
+
+		h.nesting = true
 
 		res += "<li>"
 	}
@@ -144,12 +150,9 @@ func (h *HTML) generateParagraph(para *docs.Paragraph) (string, error) {
 			return res, err
 		}
 
-		if elemRes != "" && !h.code {
-			switch elemRes[len(elemRes)-1] {
-			case '>', ' ':
-			default:
-				elemRes += " "
-			}
+		elemRes = strings.TrimRight(elemRes, " ")
+		if elemRes != "" && elemRes[0] == '<' {
+			res += " "
 		}
 
 		res += elemRes
@@ -179,8 +182,11 @@ func (h *HTML) generateParagraph(para *docs.Paragraph) (string, error) {
 		res += "</h6>"
 	}
 
-	res = strings.Replace(res, "\u000b", "<br />\n", -1)
-	res = strings.Replace(res, "\n", "<br />\n", -1)
+	res = strings.Replace(res, "\u000b", "<br />", -1)
+	if res != "" && res[len(res)-1] == '\n' {
+		res += "</p>"
+		h.inPara = false
+	}
 
 	return res, nil
 }
