@@ -4,20 +4,61 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/erikh/gdocs-export/pkg/cli"
+	"github.com/mitchellh/go-homedir"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
 
+func configDir() string {
+	dir, err := homedir.Dir()
+	if err != nil {
+		cli.ErrExit("Cannot locate or access home directory: %v", err)
+	}
+
+	return filepath.Join(dir, ".gdexport")
+}
+
+func ensureConfigDir() string {
+	dir := configDir()
+	if fi, err := os.Stat(dir); err == nil && fi.IsDir() {
+		return dir
+	}
+
+	if err := os.MkdirAll(dir, 0701); err != nil {
+		cli.ErrExit("Could not make settings directory: %v", err)
+	}
+
+	return dir
+}
+
+// ImportCredentials imports the credentials.json the user supplied.
+func ImportCredentials(in io.Reader) error {
+	dir := ensureConfigDir()
+
+	out, err := os.Create(filepath.Join(dir, "credentials.json"))
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	return err
+}
+
 // GetClient retrieves a token, saves the token, then returns the generated client.
 func GetClient() *http.Client {
-	b, err := ioutil.ReadFile("credentials.json")
+	dir := ensureConfigDir()
+
+	b, err := ioutil.ReadFile(filepath.Join(dir, "credentials.json"))
 	if err != nil {
-		cli.ErrExit("Unable to read client secret file: %v", err)
+		cli.ErrExit("Unable to read client secret file; did you import-credentials yet? (err: %v)", err)
 	}
 
 	// If modifying these scopes, delete your previously saved token.json.
@@ -26,7 +67,7 @@ func GetClient() *http.Client {
 		cli.ErrExit("Unable to parse client secret file to config: %v", err)
 	}
 
-	tokFile := "token.json"
+	tokFile := filepath.Join(dir, "token.json")
 	tok, err := tokenFromFile(tokFile)
 	if err != nil {
 		tok = getTokenFromWeb(config)
