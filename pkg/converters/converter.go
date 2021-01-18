@@ -110,13 +110,24 @@ var ConvertMap = map[string]TagSet{
 	"html": {
 		TokenPlain: Tag{
 			Collapse: true,
-			Escape:   func(s string) string { return html.EscapeString(s) },
+			Escape: func(s string) string {
+				if len(s) > 0 {
+					s = html.EscapeString(s)
+					if s[0] == ' ' {
+						s = "&nbsp;" + s[1:]
+					}
+					if s[len(s)-1] == ' ' {
+						s = s[:len(s)-1] + "&nbsp;"
+					}
+				}
+
+				return s
+			},
 		},
 		TokenBold: Tag{
 			Collapse:        true,
 			RequiresContent: true,
 			TrimInside:      true,
-			LeftPad:         true,
 			Before:          func(s string) string { return "<b>" + s },
 			After:           func(s string) string { return s + "</b>" },
 		},
@@ -124,7 +135,6 @@ var ConvertMap = map[string]TagSet{
 			Collapse:        true,
 			RequiresContent: true,
 			TrimInside:      true,
-			LeftPad:         true,
 			Before:          func(s string) string { return "<i>" + s },
 			After:           func(s string) string { return s + "</i>" },
 		},
@@ -185,7 +195,6 @@ var ConvertMap = map[string]TagSet{
 			},
 		},
 		TokenLink: Tag{
-			LeftPad: true,
 			Link: func(href, s string) string {
 				return fmt.Sprintf("<a href=%q>%s</a>", href, s)
 			},
