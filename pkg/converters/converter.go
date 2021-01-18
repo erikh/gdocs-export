@@ -51,7 +51,8 @@ var ConvertMap = map[string]TagSet{
 			After:      func(s string) string { return s + "\n" },
 		},
 		TokenUnorderedList: Tag{
-			Repeat: func(times int, s string) string { return strings.Repeat("  ", times-1) + s },
+			SkipFirst: true,
+			Before:    func(s string) string { return "  " + s },
 		},
 		TokenBullet: Tag{
 			TrimInside:      true,

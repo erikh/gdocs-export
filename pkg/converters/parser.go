@@ -35,7 +35,7 @@ func parseElement(elem *docs.StructuralElement, origNode *Node) error {
 				var lastChild *Node
 
 				if elem.Paragraph.Bullet.NestingLevel > 0 {
-					if len(node.Children) > 0 && node.Children[len(node.Children)-1].Token == TokenUnorderedList {
+					if node.Children[len(node.Children)-1].Token == TokenUnorderedList {
 						lastChild = node.Children[len(node.Children)-1]
 					}
 				}
@@ -44,7 +44,7 @@ func parseElement(elem *docs.StructuralElement, origNode *Node) error {
 					node = node.append(&Node{Token: TokenUnorderedList, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
 				} else {
 					node = lastChild
-					if lastChild.BulletNesting < elem.Paragraph.Bullet.NestingLevel+1 {
+					if lastChild.BulletNesting <= elem.Paragraph.Bullet.NestingLevel+1 {
 						for i := (elem.Paragraph.Bullet.NestingLevel + 1) - lastChild.BulletNesting; i >= 1; i-- {
 							node = node.append(&Node{Token: TokenUnorderedList, BulletNesting: i})
 						}

@@ -81,6 +81,7 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 
 	if tag.Before != nil {
 		switch {
+		case tag.SkipFirst && (parent == nil || parent.Token != node.Token):
 		case tag.Collapse && parent != nil && parent.Token == node.Token:
 		default:
 			res = tag.Before(res)
@@ -92,6 +93,7 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 
 	if tag.After != nil {
 		switch {
+		case tag.SkipFirst && (parent == nil || parent.Token != node.Token):
 		case tag.Collapse && parent != nil && parent.Token == node.Token:
 		default:
 			res = tag.After(res)
