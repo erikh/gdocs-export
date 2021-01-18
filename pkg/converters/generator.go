@@ -32,7 +32,7 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 		return "", errors.New("filename was yielded yet no handler could be found for the token")
 	}
 
-	res = node.Content
+	res = strings.Replace(node.Content, "\u000b", "\n\n", -1)
 
 	var (
 		lastSib *Node
