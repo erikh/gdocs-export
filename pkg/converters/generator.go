@@ -44,10 +44,6 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 		}
 	}
 
-	if tag.Escape != nil && !noEscape {
-		res = tag.Escape(res)
-	}
-
 	var (
 		lastSib *Node
 	)
@@ -65,7 +61,7 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 			res += " "
 		}
 
-		if sibConv.Escape != nil && !noEscape {
+		if sibConv.Escape != nil && !noEscape && !sibConv.NoEscape {
 			tmp = sibConv.Escape(tmp)
 		}
 

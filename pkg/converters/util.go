@@ -21,5 +21,5 @@ func markdownEscape(s string) string {
 		b.WriteRune(r)
 	}
 
-	return strings.TrimLeft(b.String(), " ")
+	return b.String()
 }
