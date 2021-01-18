@@ -34,6 +34,20 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 
 	res = strings.Replace(node.Content, "\u000b", "\n\n", -1)
 
+	noEscape := false
+
+	for n := node; n != nil; n = n.parent {
+		t := converter[n.Token]
+		if t.NoEscape {
+			noEscape = true
+			break
+		}
+	}
+
+	if tag.Escape != nil && !noEscape {
+		res = tag.Escape(res)
+	}
+
 	var (
 		lastSib *Node
 	)
@@ -51,7 +65,7 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 			res += " "
 		}
 
-		if sibConv.Escape != nil {
+		if sibConv.Escape != nil && !noEscape {
 			tmp = sibConv.Escape(tmp)
 		}
 

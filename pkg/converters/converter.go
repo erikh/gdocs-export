@@ -85,6 +85,7 @@ var ConvertMap = map[string]TagSet{
 			},
 		},
 		TokenCode: Tag{
+			NoEscape:        true,
 			RequiresContent: true,
 			Before: func(s string) string {
 				if strings.Contains(s, "\n") {
@@ -102,7 +103,7 @@ var ConvertMap = map[string]TagSet{
 		TokenLink: Tag{
 			LeftPad: true,
 			Link: func(href, s string) string {
-				return fmt.Sprintf("[%s](%s)", s, href)
+				return fmt.Sprintf("[%s](%s)", markdownEscape(s), href)
 			},
 		},
 	},

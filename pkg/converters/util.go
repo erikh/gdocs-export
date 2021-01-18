@@ -1,7 +1,6 @@
 package converters
 
 import (
-	"html"
 	"strings"
 )
 
@@ -22,5 +21,5 @@ func markdownEscape(s string) string {
 		b.WriteRune(r)
 	}
 
-	return strings.TrimLeft(html.EscapeString(b.String()), " ")
+	return strings.TrimLeft(b.String(), " ")
 }
