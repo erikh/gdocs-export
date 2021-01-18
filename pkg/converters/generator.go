@@ -3,7 +3,6 @@ package converters
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/erikh/gdocs-export/pkg/downloader"
@@ -85,9 +84,6 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 		case tag.Collapse && parent != nil && parent.Token == node.Token:
 		default:
 			res = tag.Before(res)
-			if strings.Contains(res, "Python") {
-				fmt.Fprintln(os.Stderr, res)
-			}
 		}
 	}
 
