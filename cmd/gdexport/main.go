@@ -71,7 +71,7 @@ func main() {
 
 func convertFormatHelp() {
 	fmt.Println("Formats supported:")
-	fmt.Println("md")
+	fmt.Println("md, html")
 	os.Exit(0)
 }
 

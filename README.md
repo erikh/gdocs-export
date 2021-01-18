@@ -1,11 +1,11 @@
-# Export Google Docs to Markdown, and more
+# Export Google Docs to Markdown, HTML, and more
 
 In this repository lives the `gdexport` command which will fetch Google Docs by
 URL and attempt to convert them to Markdown or just download them in the JSON
 representation that Google docs provides.
 
 The formatting is not perfect yet and may not be for some time. This is still
-an early alpha work.
+a beta work.
 
 ## Installation
 
