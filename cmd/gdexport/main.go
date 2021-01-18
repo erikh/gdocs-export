@@ -26,9 +26,17 @@ func main() {
 
 	app.Commands = []*cli.Command{
 		{
+			Name:      "import-credentials",
+			Usage:     "Import your credentials.json provided to you by google",
+			ArgsUsage: "[credentials.json file]",
+			Aliases:   []string{"i", "creds"},
+			Action:    importCredentials,
+		},
+		{
 			Name:      "fetch",
 			Usage:     "Download the document and (optionally) convert it",
 			ArgsUsage: "[gdocs url]",
+			Aliases:   []string{"f", "download"},
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:    "assets-dir",
@@ -53,6 +61,7 @@ func main() {
 			Name:      "convert",
 			Usage:     "Convert an already-downloaded document from JSON",
 			ArgsUsage: "[format] [filename]",
+			Aliases:   []string{"c", "transform"},
 			Flags: []cli.Flag{
 				&cli.StringFlag{
 					Name:    "assets-dir",
@@ -71,7 +80,7 @@ func main() {
 
 func convertFormatHelp() {
 	fmt.Println("Formats supported:")
-	fmt.Println("md")
+	fmt.Println("md, html")
 	os.Exit(0)
 }
 
@@ -195,4 +204,18 @@ func fetch(ctx *cli.Context) error {
 	}
 
 	return nil
+}
+
+func importCredentials(ctx *cli.Context) error {
+	if ctx.Args().Len() != 1 {
+		return errors.New("invalid arguments: please see help")
+	}
+
+	f, err := os.Open(ctx.Args().First())
+	if err != nil {
+		return fmt.Errorf("Cannot open %q: %w", ctx.Args().First(), err)
+	}
+	defer f.Close()
+
+	return oauth2.ImportCredentials(f)
 }
