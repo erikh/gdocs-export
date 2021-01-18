@@ -3,7 +3,6 @@ package converters
 import "github.com/erikh/gdocs-export/pkg/downloader"
 
 type Tag struct {
-	SkipFirst       bool
 	Collapse        bool
 	RequiresContent bool
 	LeftPad         bool

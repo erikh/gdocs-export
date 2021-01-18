@@ -25,10 +25,9 @@ type TagSet map[Token]Tag
 var ConvertMap = map[string]TagSet{
 	"md": {
 		TokenPlain: Tag{
-			Collapse:   true,
-			LeftPad:    true,
-			TrimInside: true,
-			Escape:     func(s string) string { return markdownEscape(s) },
+			Collapse: true,
+			LeftPad:  true,
+			Escape:   func(s string) string { return markdownEscape(s) },
 		},
 		TokenBold: Tag{
 			Collapse:        true,
@@ -85,7 +84,6 @@ var ConvertMap = map[string]TagSet{
 			},
 		},
 		TokenCode: Tag{
-			TrimInside:      true,
 			RequiresContent: true,
 			Before: func(s string) string {
 				if strings.Contains(s, "\n") {
@@ -125,11 +123,10 @@ var ConvertMap = map[string]TagSet{
 			},
 		},
 		TokenBold: Tag{
-			Collapse:        true,
-			RequiresContent: true,
-			TrimInside:      true,
-			Before:          func(s string) string { return "<b>" + s },
-			After:           func(s string) string { return s + "</b>" },
+			Collapse:   true,
+			TrimInside: true,
+			Before:     func(s string) string { return "<b>" + s },
+			After:      func(s string) string { return s + "</b>" },
 		},
 		TokenItalic: Tag{
 			Collapse:        true,
@@ -139,6 +136,7 @@ var ConvertMap = map[string]TagSet{
 			After:           func(s string) string { return s + "</i>" },
 		},
 		TokenParagraph: Tag{
+			Collapse:        true,
 			LeftPad:         true,
 			TrimInside:      true,
 			RequiresContent: true,

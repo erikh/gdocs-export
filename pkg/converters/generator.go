@@ -3,6 +3,7 @@ package converters
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/erikh/gdocs-export/pkg/downloader"
@@ -76,30 +77,23 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 		}
 	}
 
-	var lastChild *Node
-
-	if len(node.Children) > 1 {
-		lastChild = node.Children[len(node.Children)-2]
-	}
+	parent := node.parent
 
 	if tag.Before != nil {
 		switch {
-		case !tag.SkipFirst && !tag.Collapse:
+		case tag.Collapse && parent != nil && parent.Token == node.Token:
+		default:
 			res = tag.Before(res)
-		case tag.Collapse && (lastChild == nil || lastChild.Token != node.Token):
-			res = tag.Before(res)
-		case !tag.SkipFirst && lastChild == nil:
-			res = tag.Before(res)
+			if strings.Contains(res, "Python") {
+				fmt.Fprintln(os.Stderr, res)
+			}
 		}
 	}
 
-	if tag.After != nil && (!tag.Collapse || (node.parent != nil && node.parent.Token != node.Token)) {
+	if tag.After != nil {
 		switch {
-		case !tag.SkipFirst && !tag.Collapse:
-			res = tag.After(res)
-		case tag.Collapse && (lastChild == nil || lastChild.Token != node.Token):
-			res = tag.After(res)
-		case !tag.SkipFirst && (lastChild == nil || lastChild.Token == node.Token):
+		case tag.Collapse && parent != nil && parent.Token == node.Token:
+		default:
 			res = tag.After(res)
 		}
 	}
