@@ -9,7 +9,9 @@ a beta work.
 
 ## Installation
 
-Installation requires a [golang](https://golang.org) version 1.14 or greater
+Check out the [releases page](https://github.com/erikh/gdocs-export/releases).
+
+Building requires a [golang](https://golang.org) version 1.14 or greater
 currently. Many system packages will not work, so install Golang by hand if you
 need to.
 
@@ -20,6 +22,10 @@ First, create a [credentials.json per this example](https://developers.google.co
 
 If you do not do the `import-credentials` step below, the `fetch` command **will not work**.
 
+```bash
+gdexport import-credentials credentials.json
+```
+
 The first time you launch the program to fetch a document, you will be prompted
 to visit something in your browser and insert a code to STDIN.
 
@@ -28,7 +34,6 @@ to visit something in your browser and insert a code to STDIN.
 ```bash
 export GOBIN=$HOME/bin
 go get -u github.com/erikh/gdocs-export/...
-$GOBIN/gdexport import-credentials credentials.json
 ```
 
 ## Usage
