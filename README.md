@@ -18,14 +18,17 @@ need to.
 First, create a [credentials.json per this example](https://developers.google.com/docs/api/quickstart/go) (click on
 "enable the Google Docs API" and follow the prompts).
 
+If you do not do the `import-credentials` step below, the `fetch` command **will not work**.
+
 The first time you launch the program to fetch a document, you will be prompted
 to visit something in your browser and insert a code to STDIN.
 
 ### Installing the repository and setting it up
 
 ```bash
-GOBIN=$HOME/bin # or whatever; whereever you want it to end up
+export GOBIN=$HOME/bin
 go get -u github.com/erikh/gdocs-export/...
+$GOBIN/gdexport import-credentials credentials.json
 ```
 
 ## Usage
