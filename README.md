@@ -42,8 +42,8 @@ There are the following sub-commands:
 
 - `import-credentials`: import a `credentials.json` downloaded from the google
   docs API. Needed to use the `fetch` command.
-- `fetch`: Download a document and optionally convert it. `go run ./cmd/gdexport help fetch` for more information.
-- `convert`: Convert a document on disk. `go run ./cmd/gdexport help convert` for more information.
+- `fetch`: Download a document and optionally convert it. `gdexport help fetch` for more information.
+- `convert`: Convert a document on disk. `gdexport help convert` for more information.
 
 ## Notes
 
