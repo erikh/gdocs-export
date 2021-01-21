@@ -17,7 +17,8 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 	var res string
 	tag, ok := converter[node.Token]
 	if !ok {
-		return "", fmt.Errorf("Parser is broken: missing handler for token %q", node.Token)
+		// FIXME convert this error to use a string value
+		return "", fmt.Errorf("Parser is broken: missing handler for token %d", node.Token)
 	}
 
 	if node.ObjectId != "" {

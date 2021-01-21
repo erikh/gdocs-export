@@ -54,10 +54,20 @@ var ConvertMap = map[string]TagSet{
 			SkipFirst: true,
 			Before:    func(s string) string { return "  " + s },
 		},
-		TokenBullet: Tag{
+		TokenOrderedList: Tag{
+			SkipFirst: true,
+			Before:    func(s string) string { return "  " + s },
+		},
+		TokenUnorderedBullet: Tag{
 			TrimInside:      true,
 			RequiresContent: true,
 			Before:          func(s string) string { return "* " + s },
+			After:           func(s string) string { return s + "\n" },
+		},
+		TokenOrderedBullet: Tag{
+			TrimInside:      true,
+			RequiresContent: true,
+			Before:          func(s string) string { return "1. " + s },
 			After:           func(s string) string { return s + "\n" },
 		},
 		TokenHeading: Tag{
@@ -149,7 +159,15 @@ var ConvertMap = map[string]TagSet{
 			Before: func(s string) string { return "<ul>" + s },
 			After:  func(s string) string { return s + "</ul>" },
 		},
-		TokenBullet: Tag{
+		TokenOrderedList: Tag{
+			Before: func(s string) string { return "<ol>" + s },
+			After:  func(s string) string { return s + "</ol>" },
+		},
+		TokenUnorderedBullet: Tag{
+			Before: func(s string) string { return "<li>" + s },
+			After:  func(s string) string { return s + "</li>" },
+		},
+		TokenOrderedBullet: Tag{
 			Before: func(s string) string { return "<li>" + s },
 			After:  func(s string) string { return s + "</li>" },
 		},

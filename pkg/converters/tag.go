@@ -20,17 +20,19 @@ type Tag struct {
 type Token int
 
 const (
-	TokenPlain         = 0
-	TokenBold          = iota
-	TokenItalic        = iota
-	TokenCode          = iota
-	TokenParagraph     = iota
-	TokenImage         = iota
-	TokenBullet        = iota
-	TokenHeading       = iota
-	TokenTable         = iota
-	TokenTableRow      = iota
-	TokenTableCell     = iota
-	TokenUnorderedList = iota
-	TokenLink          = iota
+	TokenPlain           Token = 0
+	TokenBold            Token = iota
+	TokenItalic          Token = iota
+	TokenCode            Token = iota
+	TokenParagraph       Token = iota
+	TokenImage           Token = iota
+	TokenUnorderedBullet Token = iota
+	TokenOrderedBullet   Token = iota
+	TokenHeading         Token = iota
+	TokenTable           Token = iota
+	TokenTableRow        Token = iota
+	TokenTableCell       Token = iota
+	TokenUnorderedList   Token = iota
+	TokenOrderedList     Token = iota
+	TokenLink            Token = iota
 )

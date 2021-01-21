@@ -12,7 +12,7 @@ func Parse(doc *docs.Document, manifest downloader.Manifest) (*Node, error) {
 	node := &Node{}
 
 	for _, elem := range doc.Body.Content {
-		if err := parseElement(elem, node); err != nil {
+		if err := parseElement(doc, elem, node); err != nil {
 			return node, err
 		}
 	}
@@ -26,35 +26,47 @@ func Parse(doc *docs.Document, manifest downloader.Manifest) (*Node, error) {
 	return node, nil
 }
 
-func parseElement(elem *docs.StructuralElement, origNode *Node) error {
+func parseElement(doc *docs.Document, elem *docs.StructuralElement, origNode *Node) error {
 	node := origNode
 
 	if elem.Paragraph != nil {
 		if elem.Paragraph.Bullet != nil {
+			list := doc.Lists[elem.Paragraph.Bullet.ListId]
+			listProps := list.ListProperties.NestingLevels[elem.Paragraph.Bullet.NestingLevel]
+
+			token := TokenUnorderedList
+			bulletToken := TokenUnorderedBullet
+
+			if listProps.GlyphType == "DECIMAL" {
+				token = TokenOrderedList
+				bulletToken = TokenOrderedBullet
+			}
+
 			if len(node.Children) != 0 {
 				var lastChild *Node
 
 				if elem.Paragraph.Bullet.NestingLevel > 0 {
-					if node.Children[len(node.Children)-1].Token == TokenUnorderedList {
+					t := node.Children[len(node.Children)-1].Token
+					if t == token {
 						lastChild = node.Children[len(node.Children)-1]
 					}
 				}
 
 				if lastChild == nil {
-					node = node.append(&Node{Token: TokenUnorderedList, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
+					node = node.append(&Node{Token: token, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
 				} else {
 					node = lastChild
 					if lastChild.BulletNesting <= elem.Paragraph.Bullet.NestingLevel+1 {
 						for i := (elem.Paragraph.Bullet.NestingLevel + 1) - lastChild.BulletNesting; i >= 1; i-- {
-							node = node.append(&Node{Token: TokenUnorderedList, BulletNesting: i})
+							node = node.append(&Node{Token: token, BulletNesting: i})
 						}
 					}
 				}
 
-				node = node.append(&Node{Token: TokenBullet, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
+				node = node.append(&Node{Token: bulletToken, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
 			} else {
-				node = node.append(&Node{Token: TokenUnorderedList, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
-				node = node.append(&Node{Token: TokenBullet, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
+				node = node.append(&Node{Token: token, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
+				node = node.append(&Node{Token: bulletToken, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
 			}
 		} else {
 			var headingLevel int
@@ -121,7 +133,7 @@ func parseElement(elem *docs.StructuralElement, origNode *Node) error {
 	}
 
 	if elem.Table != nil {
-		if err := parseTable(elem.Table, origNode); err != nil {
+		if err := parseTable(doc, elem.Table, origNode); err != nil {
 			return err
 		}
 	}
@@ -129,7 +141,7 @@ func parseElement(elem *docs.StructuralElement, origNode *Node) error {
 	return nil
 }
 
-func parseTable(table *docs.Table, node *Node) error {
+func parseTable(doc *docs.Document, table *docs.Table, node *Node) error {
 	tableNode := node.append(&Node{Token: TokenTable})
 
 	for _, row := range table.TableRows {
@@ -138,7 +150,7 @@ func parseTable(table *docs.Table, node *Node) error {
 			for _, elem := range cell.Content {
 				cellNode := rowNode.append(&Node{Token: TokenTableCell})
 
-				if err := parseElement(elem, cellNode); err != nil {
+				if err := parseElement(doc, elem, cellNode); err != nil {
 					return err
 				}
 			}
