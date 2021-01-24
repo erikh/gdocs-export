@@ -1,0 +1,6 @@
+---
+mountpoint: /go/src/github.com/erikh/gdocs-export
+runs:
+  test:
+    image: golang:1.15
+    command: [ "go", "test", "-v", "./..." ]
