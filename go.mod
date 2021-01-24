@@ -4,9 +4,11 @@ go 1.15
 
 require (
 	cloud.google.com/go v0.75.0 // indirect
+	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/oauth2 v0.0.0-20210112200429-01de73cf58bd
 	golang.org/x/sys v0.0.0-20210112091331-59c308dcf3cc // indirect
