@@ -54,10 +54,20 @@ var ConvertMap = map[string]TagSet{
 			SkipFirst: true,
 			Before:    func(s string) string { return "  " + s },
 		},
-		TokenBullet: Tag{
+		TokenUnorderedBullet: Tag{
 			TrimInside:      true,
 			RequiresContent: true,
 			Before:          func(s string) string { return "* " + s },
+			After:           func(s string) string { return s + "\n" },
+		},
+		TokenOrderedList: Tag{
+			SkipFirst: true,
+			Before:    func(s string) string { return "  " + s },
+		},
+		TokenOrderedBullet: Tag{
+			TrimInside:      true,
+			RequiresContent: true,
+			ListBefore:      func(s string, i int) string { return fmt.Sprintf("%d. ", i) + s },
 			After:           func(s string) string { return s + "\n" },
 		},
 		TokenHeading: Tag{
@@ -138,7 +148,6 @@ var ConvertMap = map[string]TagSet{
 			After:           func(s string) string { return s + "</i>" },
 		},
 		TokenParagraph: Tag{
-			Collapse:        true,
 			LeftPad:         true,
 			TrimInside:      true,
 			RequiresContent: true,
@@ -149,9 +158,17 @@ var ConvertMap = map[string]TagSet{
 			Before: func(s string) string { return "<ul>" + s },
 			After:  func(s string) string { return s + "</ul>" },
 		},
-		TokenBullet: Tag{
+		TokenUnorderedBullet: Tag{
 			Before: func(s string) string { return "<li>" + s },
 			After:  func(s string) string { return s + "</li>" },
+		},
+		TokenOrderedList: Tag{
+			Before: func(s string) string { return "<ol>" + s },
+			After:  func(s string) string { return s + "</ol>" },
+		},
+		TokenOrderedBullet: Tag{
+			ListBefore: func(s string, i int) string { return fmt.Sprintf(`<li value="%d">`, i) + s },
+			After:      func(s string) string { return s + "</li>" },
 		},
 		TokenHeading: Tag{
 			TrimInside:      true,

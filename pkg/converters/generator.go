@@ -88,12 +88,16 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 
 	parent := node.parent
 
-	if tag.Before != nil {
+	if tag.Before != nil || tag.ListBefore != nil {
 		switch {
 		case tag.SkipFirst && (parent == nil || parent.Token != node.Token):
 		case tag.Collapse && parent != nil && parent.Token == node.Token:
 		default:
-			res = tag.Before(res)
+			if tag.ListBefore != nil {
+				res = tag.ListBefore(res, node.ListNumber)
+			} else {
+				res = tag.Before(res)
+			}
 		}
 	}
 

@@ -9,20 +9,24 @@ import (
 )
 
 type parser struct {
-	doc      *docs.Document
-	manifest downloader.Manifest
+	doc       *docs.Document
+	manifest  downloader.Manifest
+	bulletMap map[string]*Node
 }
 
 func Parse(doc *docs.Document, manifest downloader.Manifest) (*Node, error) {
-	node := &Node{}
+	origNode := &Node{}
+	node := origNode
 
 	parser := &parser{
-		doc:      doc,
-		manifest: manifest,
+		doc:       doc,
+		manifest:  manifest,
+		bulletMap: map[string]*Node{},
 	}
 
 	for _, elem := range doc.Body.Content {
-		if err := parser.parseElement(elem, node); err != nil {
+		var err error
+		if node, err = parser.parseElement(elem, node); err != nil {
 			return node, err
 		}
 	}
@@ -30,78 +34,75 @@ func Parse(doc *docs.Document, manifest downloader.Manifest) (*Node, error) {
 	if os.Getenv("DUMP_PARSE_TREE") != "" {
 		enc := json.NewEncoder(os.Stderr)
 		enc.SetIndent("", "  ")
-		enc.Encode(node)
+		enc.Encode(origNode)
 	}
 
-	return node, nil
+	return origNode, nil
 }
 
-func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) error {
+func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) (*Node, error) {
 	node := origNode
 
 	if elem.Paragraph != nil {
 		if elem.Paragraph.Bullet != nil {
-			if len(node.Children) != 0 {
-				var lastChild *Node
+			listID := elem.Paragraph.Bullet.ListId
+			glyphType := p.doc.Lists[listID].ListProperties.NestingLevels[elem.Paragraph.Bullet.NestingLevel].GlyphType
 
-				if elem.Paragraph.Bullet.NestingLevel > 0 {
-					if node.Children[len(node.Children)-1].Token == TokenUnorderedList {
-						lastChild = node.Children[len(node.Children)-1]
-					}
-				}
+			var listToken Token
+			var bulletToken Token
 
-				if lastChild == nil {
-					node = node.append(&Node{Token: TokenUnorderedList, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
-				} else {
-					node = lastChild
-					if lastChild.BulletNesting <= elem.Paragraph.Bullet.NestingLevel+1 {
-						for i := (elem.Paragraph.Bullet.NestingLevel + 1) - lastChild.BulletNesting; i >= 1; i-- {
-							node = node.append(&Node{Token: TokenUnorderedList, BulletNesting: i})
-						}
-					}
-				}
+			switch glyphType {
+			case "DECIMAL":
+				listToken = TokenOrderedList
+				bulletToken = TokenOrderedBullet
+			default:
+				listToken = TokenUnorderedList
+				bulletToken = TokenUnorderedBullet
+			}
 
-				node = node.append(&Node{Token: TokenBullet, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
+			if thisNode, ok := p.bulletMap[listID]; ok {
+				node = thisNode.append(&Node{Token: bulletToken, ListNumber: len(thisNode.Children) + 1, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
 			} else {
-				node = node.append(&Node{Token: TokenUnorderedList, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
-				node = node.append(&Node{Token: TokenBullet, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
+				node = node.append(&Node{Token: listToken, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
+				p.bulletMap[listID] = node
+				node = node.append(&Node{Token: bulletToken, ListNumber: len(node.Children) + 1, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
 			}
-		} else {
-			var headingLevel int
-			switch elem.Paragraph.ParagraphStyle.NamedStyleType {
-			case "HEADING_1":
-				headingLevel = 1
-			case "HEADING_2":
-				headingLevel = 2
-			case "HEADING_3":
-				headingLevel = 3
-			case "HEADING_4":
-				headingLevel = 4
-			case "HEADING_5":
-				headingLevel = 5
-			case "HEADING_6":
-				headingLevel = 6
-			}
+		}
 
-			if headingLevel > 0 {
-				node = node.append(&Node{Token: TokenHeading, Repeat: headingLevel})
-			}
+		node = node.append(&Node{Token: TokenParagraph})
 
-			code := true
-			for _, pelem := range elem.Paragraph.Elements {
-				if !(pelem.TextRun != nil && pelem.TextRun.TextStyle.WeightedFontFamily != nil && pelem.TextRun.TextStyle.WeightedFontFamily.FontFamily == "Consolas") {
-					code = false
-					break
-				}
+		var headingLevel int
+		switch elem.Paragraph.ParagraphStyle.NamedStyleType {
+		case "HEADING_1":
+			headingLevel = 1
+		case "HEADING_2":
+			headingLevel = 2
+		case "HEADING_3":
+			headingLevel = 3
+		case "HEADING_4":
+			headingLevel = 4
+		case "HEADING_5":
+			headingLevel = 5
+		case "HEADING_6":
+			headingLevel = 6
+		}
+
+		if headingLevel > 0 {
+			node = node.append(&Node{Token: TokenHeading, Repeat: headingLevel})
+		}
+
+		code := true
+		for _, pelem := range elem.Paragraph.Elements {
+			if !(pelem.TextRun != nil && pelem.TextRun.TextStyle.WeightedFontFamily != nil && pelem.TextRun.TextStyle.WeightedFontFamily.FontFamily == "Consolas") {
+				code = false
+				break
 			}
-			if code {
-				if node.Children[len(node.Children)-1].Token == TokenCode {
-					node = node.Children[len(node.Children)-1]
-				} else {
-					node = node.append(&Node{Token: TokenCode})
-				}
+		}
+		if code {
+			if node.Children[len(node.Children)-1].Token == TokenCode {
+				node = node.Children[len(node.Children)-1]
 			} else {
-				node = node.append(&Node{Token: TokenParagraph})
+				node = node.append(&Node{Token: TokenCode})
 			}
 		}
 
@@ -124,19 +125,21 @@ func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) erro
 				}
 
 				paraNode.append(&Node{Token: TokenPlain, Content: tr.Content})
-			} else if pelem.InlineObjectElement != nil {
+			}
+
+			if pelem.InlineObjectElement != nil {
 				paraNode.append(&Node{Token: TokenImage, ObjectId: pelem.InlineObjectElement.InlineObjectId})
 			}
 		}
 	}
 
 	if elem.Table != nil {
-		if err := p.parseTable(elem.Table, origNode); err != nil {
-			return err
+		if err := p.parseTable(elem.Table, node); err != nil {
+			return node, err
 		}
 	}
 
-	return nil
+	return node, nil
 }
 
 func (p *parser) parseTable(table *docs.Table, node *Node) error {
@@ -147,8 +150,8 @@ func (p *parser) parseTable(table *docs.Table, node *Node) error {
 		for _, cell := range row.TableCells {
 			for _, elem := range cell.Content {
 				cellNode := rowNode.append(&Node{Token: TokenTableCell})
-
-				if err := p.parseElement(elem, cellNode); err != nil {
+				var err error
+				if cellNode, err = p.parseElement(elem, cellNode); err != nil {
 					return err
 				}
 			}

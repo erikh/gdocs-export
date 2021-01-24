@@ -5,6 +5,7 @@ type Node struct {
 	ObjectId      string
 	Repeat        int
 	BulletNesting int64
+	ListNumber    int
 	Token         Token
 	parent        *Node
 	Children      []*Node
