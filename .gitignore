@@ -1,5 +1,5 @@
 release
-assets
+/assets
 credentials.json
 token.json
 even.json
