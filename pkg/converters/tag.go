@@ -9,9 +9,11 @@ type Tag struct {
 	RequiresContent bool
 	LeftPad         bool
 	TrimInside      bool
+	ListItem        bool
 	Escape          func(string) string
 	Link            func(string, string) string
 	Repeat          func(int, string) string
+	ListBefore      func(string, int) string
 	Before          func(string) string
 	After           func(string) string
 	MapFile         func(downloader.ManifestFile) string
@@ -20,17 +22,20 @@ type Tag struct {
 type Token int
 
 const (
-	TokenPlain         = 0
-	TokenBold          = iota
-	TokenItalic        = iota
-	TokenCode          = iota
-	TokenParagraph     = iota
-	TokenImage         = iota
-	TokenBullet        = iota
-	TokenHeading       = iota
-	TokenTable         = iota
-	TokenTableRow      = iota
-	TokenTableCell     = iota
-	TokenUnorderedList = iota
-	TokenLink          = iota
+	TokenPlain           = 0
+	TokenBold            = iota
+	TokenItalic          = iota
+	TokenCode            = iota
+	TokenParagraph       = iota
+	TokenImage           = iota
+	TokenBullet          = iota
+	TokenHeading         = iota
+	TokenTable           = iota
+	TokenTableRow        = iota
+	TokenTableCell       = iota
+	TokenUnorderedBullet = iota
+	TokenUnorderedList   = iota
+	TokenOrderedBullet   = iota
+	TokenOrderedList     = iota
+	TokenLink            = iota
 )

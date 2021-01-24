@@ -5,6 +5,7 @@ type Node struct {
 	ObjectId      string
 	Repeat        int
 	BulletNesting int64
+	ListNumber    int
 	Token         Token
 	parent        *Node
 	Children      []*Node
@@ -14,5 +15,6 @@ type Node struct {
 func (n *Node) append(node *Node) *Node {
 	node.parent = n
 	n.Children = append(n.Children, node)
+
 	return node
 }

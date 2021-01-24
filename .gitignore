@@ -1,7 +1,4 @@
 release
 /assets
-credentials.json
-token.json
-even.json
-test.json
+/*.json
 /*.html

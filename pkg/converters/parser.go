@@ -8,11 +8,25 @@ import (
 	"google.golang.org/api/docs/v1"
 )
 
+type parser struct {
+	doc       *docs.Document
+	manifest  downloader.Manifest
+	bulletMap map[string]*Node
+}
+
 func Parse(doc *docs.Document, manifest downloader.Manifest) (*Node, error) {
-	node := &Node{}
+	origNode := &Node{}
+	node := origNode
+
+	parser := &parser{
+		doc:       doc,
+		manifest:  manifest,
+		bulletMap: map[string]*Node{},
+	}
 
 	for _, elem := range doc.Body.Content {
-		if err := parseElement(elem, node); err != nil {
+		var err error
+		if node, err = parser.parseElement(elem, node); err != nil {
 			return node, err
 		}
 	}
@@ -20,43 +34,58 @@ func Parse(doc *docs.Document, manifest downloader.Manifest) (*Node, error) {
 	if os.Getenv("DUMP_PARSE_TREE") != "" {
 		enc := json.NewEncoder(os.Stderr)
 		enc.SetIndent("", "  ")
-		enc.Encode(node)
+		enc.Encode(origNode)
 	}
 
-	return node, nil
+	return origNode, nil
 }
 
-func parseElement(elem *docs.StructuralElement, origNode *Node) error {
+func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) (*Node, error) {
 	node := origNode
 
 	if elem.Paragraph != nil {
 		if elem.Paragraph.Bullet != nil {
-			if len(node.Children) != 0 {
-				var lastChild *Node
+			listID := elem.Paragraph.Bullet.ListId
+			glyphType := p.doc.Lists[listID].ListProperties.NestingLevels[elem.Paragraph.Bullet.NestingLevel].GlyphType
 
-				if elem.Paragraph.Bullet.NestingLevel > 0 {
-					if node.Children[len(node.Children)-1].Token == TokenUnorderedList {
-						lastChild = node.Children[len(node.Children)-1]
-					}
-				}
+			var listToken Token
+			var bulletToken Token
 
-				if lastChild == nil {
-					node = node.append(&Node{Token: TokenUnorderedList, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
-				} else {
-					node = lastChild
-					if lastChild.BulletNesting <= elem.Paragraph.Bullet.NestingLevel+1 {
-						for i := (elem.Paragraph.Bullet.NestingLevel + 1) - lastChild.BulletNesting; i >= 1; i-- {
-							node = node.append(&Node{Token: TokenUnorderedList, BulletNesting: i})
-						}
-					}
-				}
-
-				node = node.append(&Node{Token: TokenBullet, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
-			} else {
-				node = node.append(&Node{Token: TokenUnorderedList, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
-				node = node.append(&Node{Token: TokenBullet, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
+			switch glyphType {
+			case "DECIMAL":
+				listToken = TokenOrderedList
+				bulletToken = TokenOrderedBullet
+			default:
+				listToken = TokenUnorderedList
+				bulletToken = TokenUnorderedBullet
 			}
-		} else {
+
+			if thisNode, ok := p.bulletMap[listID]; ok {
+				for i := thisNode.BulletNesting; i < elem.Paragraph.Bullet.NestingLevel+1; i++ {
+					thisNode = thisNode.append(&Node{Token: listToken, BulletNesting: i})
+				}
+				node = thisNode.append(&Node{Token: bulletToken, ListNumber: len(thisNode.Children) + 1, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
+			} else {
+				node = node.append(&Node{Token: listToken, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
+				p.bulletMap[listID] = node
+				node = node.append(&Node{Token: bulletToken, ListNumber: len(node.Children) + 1, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
+			}
+		}
+
+		code := true
+
+		for _, pelem := range elem.Paragraph.Elements {
+			if !(pelem.TextRun != nil && pelem.TextRun.TextStyle.WeightedFontFamily != nil && pelem.TextRun.TextStyle.WeightedFontFamily.FontFamily == "Consolas") {
+				code = false
+				break
+			}
+		}
+
+		if code && node.Token != TokenCode {
+			node = node.append(&Node{Token: TokenCode})
+		} else if !code {
+			node = node.append(&Node{Token: TokenParagraph})
+
 			var headingLevel int
 			switch elem.Paragraph.ParagraphStyle.NamedStyleType {
 			case "HEADING_1":
@@ -76,29 +105,13 @@ func parseElement(elem *docs.StructuralElement, origNode *Node) error {
 			if headingLevel > 0 {
 				node = node.append(&Node{Token: TokenHeading, Repeat: headingLevel})
 			}
-
-			code := true
-			for _, pelem := range elem.Paragraph.Elements {
-				if !(pelem.TextRun != nil && pelem.TextRun.TextStyle.WeightedFontFamily != nil && pelem.TextRun.TextStyle.WeightedFontFamily.FontFamily == "Consolas") {
-					code = false
-					break
-				}
-			}
-			if code {
-				if node.Children[len(node.Children)-1].Token == TokenCode {
-					node = node.Children[len(node.Children)-1]
-				} else {
-					node = node.append(&Node{Token: TokenCode})
-				}
-			} else {
-				node = node.append(&Node{Token: TokenParagraph})
-			}
 		}
 
 		for _, pelem := range elem.Paragraph.Elements {
-			paraNode := node
-
-			if pelem.TextRun != nil {
+			if node.Token == TokenCode && pelem.TextRun != nil {
+				node.Content += pelem.TextRun.Content
+			} else if pelem.TextRun != nil {
+				paraNode := node
 				tr := pelem.TextRun
 				ts := tr.TextStyle
 				if ts != nil {
@@ -114,22 +127,25 @@ func parseElement(elem *docs.StructuralElement, origNode *Node) error {
 				}
 
 				paraNode.append(&Node{Token: TokenPlain, Content: tr.Content})
-			} else if pelem.InlineObjectElement != nil {
-				paraNode.append(&Node{Token: TokenImage, ObjectId: pelem.InlineObjectElement.InlineObjectId})
+
+			}
+
+			if pelem.InlineObjectElement != nil {
+				node.append(&Node{Token: TokenImage, ObjectId: pelem.InlineObjectElement.InlineObjectId})
 			}
 		}
 	}
 
 	if elem.Table != nil {
-		if err := parseTable(elem.Table, origNode); err != nil {
-			return err
+		if err := p.parseTable(elem.Table, node); err != nil {
+			return node, err
 		}
 	}
 
-	return nil
+	return origNode, nil
 }
 
-func parseTable(table *docs.Table, node *Node) error {
+func (p *parser) parseTable(table *docs.Table, node *Node) error {
 	tableNode := node.append(&Node{Token: TokenTable})
 
 	for _, row := range table.TableRows {
@@ -137,8 +153,8 @@ func parseTable(table *docs.Table, node *Node) error {
 		for _, cell := range row.TableCells {
 			for _, elem := range cell.Content {
 				cellNode := rowNode.append(&Node{Token: TokenTableCell})
-
-				if err := parseElement(elem, cellNode); err != nil {
+				var err error
+				if cellNode, err = p.parseElement(elem, cellNode); err != nil {
 					return err
 				}
 			}
