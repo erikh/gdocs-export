@@ -163,8 +163,6 @@ func fetch(ctx *cli.Context) error {
 		return fmt.Errorf("Unable to retrieve data from document: %v", err)
 	}
 
-	fmt.Fprintln(os.Stderr, "Downloading assets (this can take a bit)")
-
 	a, err := downloader.New(client)
 	if err != nil {
 		return fmt.Errorf("%v", err)
@@ -172,6 +170,7 @@ func fetch(ctx *cli.Context) error {
 
 	if ctx.Bool("download") {
 		dl := ctx.String("assets-dir")
+		fmt.Fprintf(os.Stderr, "Downloading assets to %q (this can take a bit)\n", dl)
 
 		if err := a.Download(dl, doc); err != nil {
 			return fmt.Errorf("trouble downloading to %q: %v", dl, err)
