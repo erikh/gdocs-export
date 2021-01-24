@@ -15,5 +15,6 @@ type Node struct {
 func (n *Node) append(node *Node) *Node {
 	node.parent = n
 	n.Children = append(n.Children, node)
+
 	return node
 }

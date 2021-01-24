@@ -61,6 +61,9 @@ func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) (*No
 			}
 
 			if thisNode, ok := p.bulletMap[listID]; ok {
+				for i := thisNode.BulletNesting; i < elem.Paragraph.Bullet.NestingLevel+1; i++ {
+					thisNode = thisNode.append(&Node{Token: listToken, BulletNesting: i})
+				}
 				node = thisNode.append(&Node{Token: bulletToken, ListNumber: len(thisNode.Children) + 1, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
 			} else {
 				node = node.append(&Node{Token: listToken, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
@@ -69,47 +72,46 @@ func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) (*No
 			}
 		}
 
-		node = node.append(&Node{Token: TokenParagraph})
-
-		var headingLevel int
-		switch elem.Paragraph.ParagraphStyle.NamedStyleType {
-		case "HEADING_1":
-			headingLevel = 1
-		case "HEADING_2":
-			headingLevel = 2
-		case "HEADING_3":
-			headingLevel = 3
-		case "HEADING_4":
-			headingLevel = 4
-		case "HEADING_5":
-			headingLevel = 5
-		case "HEADING_6":
-			headingLevel = 6
-		}
-
-		if headingLevel > 0 {
-			node = node.append(&Node{Token: TokenHeading, Repeat: headingLevel})
-		}
-
 		code := true
+
 		for _, pelem := range elem.Paragraph.Elements {
 			if !(pelem.TextRun != nil && pelem.TextRun.TextStyle.WeightedFontFamily != nil && pelem.TextRun.TextStyle.WeightedFontFamily.FontFamily == "Consolas") {
 				code = false
 				break
 			}
 		}
-		if code {
-			if node.Children[len(node.Children)-1].Token == TokenCode {
-				node = node.Children[len(node.Children)-1]
-			} else {
-				node = node.append(&Node{Token: TokenCode})
+
+		if code && node.Token != TokenCode {
+			node = node.append(&Node{Token: TokenCode})
+		} else if !code {
+			node = node.append(&Node{Token: TokenParagraph})
+
+			var headingLevel int
+			switch elem.Paragraph.ParagraphStyle.NamedStyleType {
+			case "HEADING_1":
+				headingLevel = 1
+			case "HEADING_2":
+				headingLevel = 2
+			case "HEADING_3":
+				headingLevel = 3
+			case "HEADING_4":
+				headingLevel = 4
+			case "HEADING_5":
+				headingLevel = 5
+			case "HEADING_6":
+				headingLevel = 6
+			}
+
+			if headingLevel > 0 {
+				node = node.append(&Node{Token: TokenHeading, Repeat: headingLevel})
 			}
 		}
 
 		for _, pelem := range elem.Paragraph.Elements {
-			paraNode := node
-
-			if pelem.TextRun != nil {
+			if node.Token == TokenCode && pelem.TextRun != nil {
+				node.Content += pelem.TextRun.Content
+			} else if pelem.TextRun != nil {
+				paraNode := node
 				tr := pelem.TextRun
 				ts := tr.TextStyle
 				if ts != nil {
@@ -125,10 +127,11 @@ func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) (*No
 				}
 
 				paraNode.append(&Node{Token: TokenPlain, Content: tr.Content})
+
 			}
 
 			if pelem.InlineObjectElement != nil {
-				paraNode.append(&Node{Token: TokenImage, ObjectId: pelem.InlineObjectElement.InlineObjectId})
+				node.append(&Node{Token: TokenImage, ObjectId: pelem.InlineObjectElement.InlineObjectId})
 			}
 		}
 	}
@@ -139,7 +142,7 @@ func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) (*No
 		}
 	}
 
-	return node, nil
+	return origNode, nil
 }
 
 func (p *parser) parseTable(table *docs.Table, node *Node) error {

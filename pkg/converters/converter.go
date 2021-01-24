@@ -95,6 +95,7 @@ var ConvertMap = map[string]TagSet{
 			},
 		},
 		TokenCode: Tag{
+			Collapse:        true,
 			NoEscape:        true,
 			RequiresContent: true,
 			Before: func(s string) string {
@@ -194,7 +195,7 @@ var ConvertMap = map[string]TagSet{
 			},
 		},
 		TokenCode: Tag{
-			TrimInside:      true,
+			Collapse:        true,
 			RequiresContent: true,
 			LeftPad:         true,
 			Before: func(s string) string {

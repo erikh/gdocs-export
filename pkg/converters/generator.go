@@ -73,7 +73,7 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 		res = strings.TrimSpace(res)
 	}
 
-	if tag.RequiresContent && res == "" {
+	if tag.RequiresContent && strings.TrimSpace(res) == "" {
 		// do not add before/after tags to empty content
 		return "", nil
 	}

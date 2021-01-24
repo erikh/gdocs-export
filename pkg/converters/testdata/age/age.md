@@ -13,23 +13,40 @@ It’s called “age”, which  _might_ be an acronym for Actually Good Encrypti
 ```
 $ age-keygen > key.txt
 
+```
+```
 $ cat key.txt
 
 # created: 2006-01-02T15:04:05Z07:00
+
+```
+```
 # public key: age1mrmfnwhtlprn4jquex0ukmwcm7y2nxlphuzgsgv8ew2k9mewy3rs8u7su5
+
+```
+```
 AGE-SECRET-KEY-1EKYFFCK627939WTZMTT4ZRS2PM3U2K7PZ3MVGEL2M76W3PYJMSHQMTT6SS
 
+```
+```
 $ echo "_o/" | age -r age1mrmfnwhtlprn4jquex0ukmwcm7y2nxlphuzgsgv8ew2k9mewy3rs8u7su5 -o hello.age
 
+```
+```
 $ age -decrypt -i key.txt hello.age
+
+```
+```
 _o/
 
+```
+```
 $ tar cv ~/xxx | age -r github:Benjojo -r github:FiloSottile | nc 192.0.2.0 1234
-
 
 ```
 
 You can find a  **beta** reference implementation at  [github.com/FiloSottile/age](https://github.com/FiloSottile/age) and a beta Rust implementation at  [github.com/str4d/rage](https://github.com/str4d/rage) .
+
 # Goals
 * An extremely simple CLI that composes well with UNIX pipes, and that works well as a backend for other programs
 * Small copy-pasteable keys, with optional textual keyrings
@@ -37,6 +54,7 @@ You can find a  **beta** reference implementation at  [github.com/FiloSottile/ag
 * The option to encrypt to SSH keys, with built-in GitHub .keys support
 * [“Have one joint and keep it well oiled”](https://www.imperialviolet.org/2016/05/16/agility.html) , no configuration or (much) algorithm agility
 * A good seekable  [streaming encryption scheme](https://www.imperialviolet.org/2014/06/27/streamingencryption.html) based on modern chunked AEADs, reusable as a general encryption format
+
 # Later
 * A  [password-store](https://www.passwordstore.org/) backend!
 * YubiKey PIV support via PKCS#11 (sigh), maybe TouchBar
@@ -48,19 +66,23 @@ You can find a  **beta** reference implementation at  [github.com/FiloSottile/ag
 * age-mount(1), a tool to mount encrypted files or archives
 
 (also satisfying the agent use case by key wrapping)
+
 # Out of scope
 * Archival (that is, reinventing zips)
 * Any kind of signing (which is not a tooling problem, but a trust and key distribution problem, and to the extent that tools matter you should just use signify/minisign, and for keys we should probably use SSH ones)
 * git commit signing, in particular (leave that to GitHub to solve) or releases and package signing (which is better solved at scale  [by transparency](https://golang.org/design/25530-sumdb) )
 * Anything about emails (which are a fundamentally unsecurable medium)
 * The web of trust, or key distribution really
+
 # Command line interface
 
 Key generation
 ```
 $ age-keygen >> ~/.config/age/keys.txt
-Public key: age1p4fuklglxqsgg602hu4c4jl4aunu5tynyf4lkg96ezh3jefzpy6swshp5x
 
+```
+```
+Public key: age1p4fuklglxqsgg602hu4c4jl4aunu5tynyf4lkg96ezh3jefzpy6swshp5x
 
 ```
 
@@ -68,19 +90,20 @@ Encryption to a public key
 ```
 $ echo "_o/" | age -o hello.age -r age1p4fuklglxqsgg602hu4c4jl4aunu5tynyf4lkg96ezh3jefzpy6swshp5x
 
-
 ```
 
 Encryption to multiple public keys (with default output to stdout)
 ```
 $ echo "_o/" | age -r age1p4fuklglxqsgg602hu4c4jl4aunu5tynyf4lkg96ezh3jefzpy6swshp5x -r age1t7r9prsqc3w3x4auqq7y8zplrfsddmf8z97hct68gmhea2l34f9q63h2kp > hello.age
 
-
 ```
 
 Encryption with a password (interactive only, use public keys for batch!)
 ```
 $ age -p -o hello.txt.age hello.txt
+
+```
+```
 Type passphrase:
 
 ```
@@ -88,9 +111,14 @@ Type passphrase:
 Encryption to a list of recipients in a file (not recursive, can’t point to other files)
 ```
 $ echo -r age1p4fuklglxqsgg602hu4c4jl4aunu5tynyf4lkg96ezh3jefzpy6swshp5x >> recipients.txt
-$ echo -r age1t7r9prsqc3w3x4auqq7y8zplrfsddmf8z97hct68gmhea2l34f9q63h2kp >> recipients.txt
-$ tar cv ~/xxx | age -r recipients.txt > xxx.tar.age
 
+```
+```
+$ echo -r age1t7r9prsqc3w3x4auqq7y8zplrfsddmf8z97hct68gmhea2l34f9q63h2kp >> recipients.txt
+
+```
+```
+$ tar cv ~/xxx | age -r recipients.txt > xxx.tar.age
 
 ```
 
@@ -98,14 +126,15 @@ Encryption to an SSH public key
 ```
 $ tar cv ~/xxx | age -r ~/.ssh/id_rsa.pub > xxx.tar.age
 
-
 ```
 
 Encryption to a list of recipients at an HTTPS URL (not recursive, can’t point to files or other HTTPS addresses)
 ```
 $ echo "_o/" | age -o hello.age -r https://github.com/FiloSottile.keys
-$ echo "_o/" | age -r https://filippo.io/.well-known/age.keys
 
+```
+```
+$ echo "_o/" | age -r https://filippo.io/.well-known/age.keys
 
 ```
 
@@ -113,24 +142,33 @@ Encryption to a GitHub user (equivalent to https://github.com/FiloSottile.keys)
 ```
 $ echo "_o/" | age -r github:FiloSottile | nc 192.0.2.0 1234
 
-
 ```
 
 Encryption to an alias (stored at ~/.config/age/aliases.txt, change with -aliases)
 ```
 $ cat ~/.config/age/aliases.txt
-filippo: pubkey:jqmfMHBjlb7HoIjjTsCQ9NHIk_q53Uy_ZxmXBhdIpx4
-ben: pubkey:ZAE2ZnRdItykp0ncAZJ2FAzIIfTvmGcgIx/759QhnQw github:Benjojo
-$ tar cv ~/xxx | age -r alias:filippo > xxx.tar.age
 
+```
+```
+filippo: pubkey:jqmfMHBjlb7HoIjjTsCQ9NHIk_q53Uy_ZxmXBhdIpx4
+
+```
+```
+ben: pubkey:ZAE2ZnRdItykp0ncAZJ2FAzIIfTvmGcgIx/759QhnQw github:Benjojo
+
+```
+```
+$ tar cv ~/xxx | age -r alias:filippo > xxx.tar.age
 
 ```
 
 Decryption with keys at ~/.config/age/keys.txt and ~/.ssh/id\_\* (no agent support)
 ```
 $ age -decrypt hello.age
-_o/
 
+```
+```
+_o/
 
 ```
 
@@ -141,31 +179,88 @@ $ age -d -o hello -i keyA.txt -i keyB.txt hello.age
 ```
 
 Encryption refuses to print to stdout if it is bound to a TTY, and so does decryption unless the payload is short and printable. Password input is only supported if a TTY is available. Duplicated aliases are both ignored and a warning is printed. Key generation checks the permissions of the output and prints a warning if world readable.
+
 # Format
 
 The file starts with a textual header that declares the version of the age format, and encapsulates the 128-bit master file key for each recipient.
 ```
 age-encryption.org/v1
--> X25519 SVrzdFfkPxf0LPHOUGB1gNb9E5Vr8EUDa9kxk04iQ0o
-0OrTkKHpE7klNLd0k+9Uam5hkQkzMxaqKcIPRIO1sNE
--> X25519 8hWaIUmk67IuRZ41zMk2V9f/w3f5qUnXLL7MGPA+zE8
-tXgpAxKgqyu1jl9I/ATwFgV42ZbNgeAlvCTJ0WgvfEo
--> scrypt GixTkc7+InSPLzPNGU6cFw 18
-kC4zjzi7LRutdBfOlGHCgox8SXgfYxRYhWM1qPs0ca8
--> ssh-rsa SkdmSg
-SW+xNSybDWTCkWx20FnCcxlfGC889s2hRxT8+giPH2DQMMFV6DyZpveqXtNwI3ts
-5rVkW/7hCBSqEPQwabC6O5ls75uNjeSURwHAaIwtQ6riL9arjVpHMl8O7GWSRnx3
-NltQt08ZpBAUkBqq5JKAr20t46ZinEIsD1LsDa2EnJrn0t8Truo2beGwZGkwkE2Y
-j8mC2GaqR0gUcpGwIk6QZMxOdxNSOO7jhIC32nt1w2Ep1ftk9wV1sFyQo+YYrzOx
-yCDdUwQAu9oM3Ez6AWkmFyG6AvKIny8I4xgJcBt1DEYZcD5PIAt51nRJQcs2/ANP
-+Y1rKeTsskMHnlRpOnMlXqoeN6A3xS+EWxFTyg1GREQeaVztuhaL6DVBB22sLskw
-XBHq/XlkLWkqoLrQtNOPvLoDO80TKUORVsP1y7OyUPHqUumxj9Mn/QtsZjNCPyKN
-ds7P2OLD/Jxq1o1ckzG3uzv8Vb6sqYUPmRvlXyD7/s/FURA1GetBiQEdRM34xbrB
--> ssh-ed25519 Xyg06A rH24zuz7XHFc1lRyQmMrekpLrcKrJupohEh/YjvQCxs
-Bbtnl6veSZhZmG7uXGQUX0hJbrC8mxDkL3zW06tqlWY
---- gxhoSa5BciRDt8lOpYNcx4EYtKpS0CJ06F3ZwN82VaM
-[BINARY ENCRYPTED PAYLOAD]
 
+```
+```
+-> X25519 SVrzdFfkPxf0LPHOUGB1gNb9E5Vr8EUDa9kxk04iQ0o
+
+```
+```
+0OrTkKHpE7klNLd0k+9Uam5hkQkzMxaqKcIPRIO1sNE
+
+```
+```
+-> X25519 8hWaIUmk67IuRZ41zMk2V9f/w3f5qUnXLL7MGPA+zE8
+
+```
+```
+tXgpAxKgqyu1jl9I/ATwFgV42ZbNgeAlvCTJ0WgvfEo
+
+```
+```
+-> scrypt GixTkc7+InSPLzPNGU6cFw 18
+
+```
+```
+kC4zjzi7LRutdBfOlGHCgox8SXgfYxRYhWM1qPs0ca8
+
+```
+```
+-> ssh-rsa SkdmSg
+
+```
+```
+SW+xNSybDWTCkWx20FnCcxlfGC889s2hRxT8+giPH2DQMMFV6DyZpveqXtNwI3ts
+
+```
+```
+5rVkW/7hCBSqEPQwabC6O5ls75uNjeSURwHAaIwtQ6riL9arjVpHMl8O7GWSRnx3
+
+```
+```
+NltQt08ZpBAUkBqq5JKAr20t46ZinEIsD1LsDa2EnJrn0t8Truo2beGwZGkwkE2Y
+
+```
+```
+j8mC2GaqR0gUcpGwIk6QZMxOdxNSOO7jhIC32nt1w2Ep1ftk9wV1sFyQo+YYrzOx
+
+```
+```
+yCDdUwQAu9oM3Ez6AWkmFyG6AvKIny8I4xgJcBt1DEYZcD5PIAt51nRJQcs2/ANP
+
+```
+```
++Y1rKeTsskMHnlRpOnMlXqoeN6A3xS+EWxFTyg1GREQeaVztuhaL6DVBB22sLskw
+
+```
+```
+XBHq/XlkLWkqoLrQtNOPvLoDO80TKUORVsP1y7OyUPHqUumxj9Mn/QtsZjNCPyKN
+
+```
+```
+ds7P2OLD/Jxq1o1ckzG3uzv8Vb6sqYUPmRvlXyD7/s/FURA1GetBiQEdRM34xbrB
+
+```
+```
+-> ssh-ed25519 Xyg06A rH24zuz7XHFc1lRyQmMrekpLrcKrJupohEh/YjvQCxs
+
+```
+```
+Bbtnl6veSZhZmG7uXGQUX0hJbrC8mxDkL3zW06tqlWY
+
+```
+```
+--- gxhoSa5BciRDt8lOpYNcx4EYtKpS0CJ06F3ZwN82VaM
+
+```
+```
+[BINARY ENCRYPTED PAYLOAD]
 
 ```
 
@@ -192,6 +287,9 @@ random(n) is a string of n bytes read from a CSPRNG like /dev/urandom.
 An  **X25519** recipient line is
 ```
 -> X25519 encode(X25519(ephemeral secret, basepoint))
+
+```
+```
 encrypt[HKDF[salt, label](X25519(ephemeral secret, public key))](file key)
 
 ```
@@ -205,6 +303,9 @@ and label is "age-encryption.org/v1/X25519".
 An  **scrypt** recipient line is
 ```
 -> scrypt encode(salt) log2(N)
+
+```
+```
 encrypt[scrypt["age-encryption.org/v1/scrypt" + salt, N](password)](file key)
 
 ```
@@ -216,6 +317,9 @@ Note that if an scrypt recipient is present it SHOULD be the only recipient: eve
 An  **ssh-rsa** recipient line is
 ```
 -> ssh-rsa encode(SHA-256(SSH key)[:4])
+
+```
+```
 RSAES-OAEP[public key, "age-encryption.org/v1/ssh-rsa"](file key)
 
 ```
@@ -225,6 +329,9 @@ where SSH key is the binary encoding of the SSH public key from RFC 8332. (Note 
 An  **ssh-ed25519** recipient line is
 ```
 -> ssh-ed25519 tag encode(X25519(ephemeral secret, basepoint))
+
+```
+```
 encrypt[HKDF[salt, label](X25519(ephemeral secret, tweaked key))](file key)
 
 ```
@@ -264,6 +371,7 @@ nonce || STREAM\[HKDF\[nonce, "payload"](file key)](plaintext)
 where nonce is random(16) and STREAM is from  [Online Authenticated-Encryption and its Nonce-Reuse Misuse-Resistance](https://eprint.iacr.org/2015/189.pdf) with ChaCha20-Poly1305 in 64KiB chunks and a nonce structure of 11 bytes of big endian counter, and 1 byte of last block flag (0x00 / 0x01).
 
 (The STREAM scheme is similar to the one  [Tink and Miscreant](https://github.com/miscreant/miscreant/issues/32) use, but without nonce prefix as we use HKDF, and with ChaCha20-Poly1305 instead of AES-GCM because the latter is unreasonably hard to do well or fast without hardware support.)
+
 ## X25519 keys
 
 X25519 private keys are 32 random bytes sourced from a CSPRNG. They are encoded as Bech32 with HRP "AGE-SECRET-KEY-".
@@ -279,11 +387,13 @@ age1zvkyg2lqzraa2lnjvqej32nkuu0ues2s82hzrye869xeexvn73equnujwj
 AGE-SECRET-KEY-1GFPYYSJZGFPYYSJZGFPYYSJZGFPYYSJZGFPYYSJZGFPYYSJZGFPQ4EGAEX
 
 ```
+
 ## ASCII armor
 
 age files can be encoded as PEM with a block type of AGE ENCRYPTED FILE.
 
 PEM is a catastrophically malleable format; implementations are encouraged to be as strict as workable. The reference implementation requires canonical Base64, rejects garbage before and after the message, and doesn’t support headers. Note that regular age files are not malleable.
+
 # Changes
 
 2019-05-16: added “created” comment to generated keys. Via  [@BenLaurie](https://twitter.com/BenLaurie/status/1128960072976146433) .
