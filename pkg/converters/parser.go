@@ -8,11 +8,21 @@ import (
 	"google.golang.org/api/docs/v1"
 )
 
+type parser struct {
+	doc      *docs.Document
+	manifest downloader.Manifest
+}
+
 func Parse(doc *docs.Document, manifest downloader.Manifest) (*Node, error) {
 	node := &Node{}
 
+	parser := &parser{
+		doc:      doc,
+		manifest: manifest,
+	}
+
 	for _, elem := range doc.Body.Content {
-		if err := parseElement(elem, node); err != nil {
+		if err := parser.parseElement(elem, node); err != nil {
 			return node, err
 		}
 	}
@@ -26,7 +36,7 @@ func Parse(doc *docs.Document, manifest downloader.Manifest) (*Node, error) {
 	return node, nil
 }
 
-func parseElement(elem *docs.StructuralElement, origNode *Node) error {
+func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) error {
 	node := origNode
 
 	if elem.Paragraph != nil {
@@ -121,7 +131,7 @@ func parseElement(elem *docs.StructuralElement, origNode *Node) error {
 	}
 
 	if elem.Table != nil {
-		if err := parseTable(elem.Table, origNode); err != nil {
+		if err := p.parseTable(elem.Table, origNode); err != nil {
 			return err
 		}
 	}
@@ -129,7 +139,7 @@ func parseElement(elem *docs.StructuralElement, origNode *Node) error {
 	return nil
 }
 
-func parseTable(table *docs.Table, node *Node) error {
+func (p *parser) parseTable(table *docs.Table, node *Node) error {
 	tableNode := node.append(&Node{Token: TokenTable})
 
 	for _, row := range table.TableRows {
@@ -138,7 +148,7 @@ func parseTable(table *docs.Table, node *Node) error {
 			for _, elem := range cell.Content {
 				cellNode := rowNode.append(&Node{Token: TokenTableCell})
 
-				if err := parseElement(elem, cellNode); err != nil {
+				if err := p.parseElement(elem, cellNode); err != nil {
 					return err
 				}
 			}
