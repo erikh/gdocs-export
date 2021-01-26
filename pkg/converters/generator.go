@@ -81,7 +81,7 @@ func Generate(typ string, node *Node, manifest downloader.Manifest) (string, err
 	if tag.Repeat != nil {
 		if node.Repeat > 0 {
 			res = tag.Repeat(node.Repeat, res)
-		} else if node.BulletNesting > 0 {
+		} else {
 			res = tag.Repeat(int(node.BulletNesting), res)
 		}
 	}
