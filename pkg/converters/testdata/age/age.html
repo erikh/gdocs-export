@@ -34,28 +34,28 @@
  <p>You can find a&nbsp;<b>beta</b>&nbsp;reference implementation at&nbsp;<a href="https://github.com/FiloSottile/age">github.com/FiloSottile/age</a>&nbsp;and a beta Rust implementation at&nbsp;<a href="https://github.com/str4d/rage">github.com/str4d/rage</a>.</p>
 <p><h1>Goals</h1></p>
 <ul><li><p>An extremely simple CLI that composes well with UNIX pipes, and that works well as a backend for other programs</p>
-</li><li><p>Small copy-pasteable keys, with optional&nbsp;textual&nbsp;keyrings</p>
-</li><li><p>Support for public/private key pairs and passwords, with multiple recipients</p>
-</li><li><p>The option to encrypt to SSH keys, with built-in GitHub .keys support</p>
-</li><li><p><a href="https://www.imperialviolet.org/2016/05/16/agility.html">“Have one joint and keep it well oiled”</a>, no configuration or (much) algorithm agility</p>
-</li><li><p>A good seekable&nbsp;<a href="https://www.imperialviolet.org/2014/06/27/streamingencryption.html">streaming encryption scheme</a>&nbsp;based on modern chunked AEADs,&nbsp;reusable&nbsp;as a general encryption format</p>
+</li></ul><ul><li><p>Small copy-pasteable keys, with optional&nbsp;textual&nbsp;keyrings</p>
+</li></ul><ul><li><p>Support for public/private key pairs and passwords, with multiple recipients</p>
+</li></ul><ul><li><p>The option to encrypt to SSH keys, with built-in GitHub .keys support</p>
+</li></ul><ul><li><p><a href="https://www.imperialviolet.org/2016/05/16/agility.html">“Have one joint and keep it well oiled”</a>, no configuration or (much) algorithm agility</p>
+</li></ul><ul><li><p>A good seekable&nbsp;<a href="https://www.imperialviolet.org/2014/06/27/streamingencryption.html">streaming encryption scheme</a>&nbsp;based on modern chunked AEADs,&nbsp;reusable&nbsp;as a general encryption format</p>
 </li></ul> <p><h1>Later</h1></p>
 <ul><li><p>A&nbsp;<a href="https://www.passwordstore.org/">password-store</a>&nbsp;backend!</p>
-</li><li><p>YubiKey PIV support via PKCS#11 (sigh), maybe TouchBar</p>
-</li><li><p>Support for a&nbsp;<a href="https://github.com/agl/pond/blob/675020c2d997636c8cd4c24c83e7bcd872dcd3aa/doc/tech.html#L86">Pond-style shared secret PAKE server</a></p>
-</li><li><p>Dictionary word encoded mnemonics for keys</p>
-</li><li><p>[DONE] An ASCII armored format</p>
-</li><li><p>Support for AES-GCM in alternative to ChaCha20-Poly1305</p>
-</li><li><p>Maybe native support for key wrapping (to implement password-protected keys)</p>
-</li><li><p>age-mount(1), a tool to mount encrypted files or archives
+</li></ul><ul><li><p>YubiKey PIV support via PKCS#11 (sigh), maybe TouchBar</p>
+</li></ul><ul><li><p>Support for a&nbsp;<a href="https://github.com/agl/pond/blob/675020c2d997636c8cd4c24c83e7bcd872dcd3aa/doc/tech.html#L86">Pond-style shared secret PAKE server</a></p>
+</li></ul><ul><li><p>Dictionary word encoded mnemonics for keys</p>
+</li></ul><ul><li><p>[DONE] An ASCII armored format</p>
+</li></ul><ul><li><p>Support for AES-GCM in alternative to ChaCha20-Poly1305</p>
+</li></ul><ul><li><p>Maybe native support for key wrapping (to implement password-protected keys)</p>
+</li></ul><ul><li><p>age-mount(1), a tool to mount encrypted files or archives
 
 (also satisfying the agent use case by key wrapping)</p>
 </li></ul> <p><h1>Out of scope</h1></p>
 <ul><li><p>Archival (that is, reinventing zips)</p>
-</li><li><p>Any kind of signing (which is not a tooling problem, but a trust and key distribution problem, and to the extent that tools matter you should just use signify/minisign, and for keys we should probably use SSH ones)</p>
-</li><li><p>git commit signing, in particular (leave that to GitHub to solve) or releases and package signing (which is better solved at scale&nbsp;<a href="https://golang.org/design/25530-sumdb">by transparency</a>)</p>
-</li><li><p>Anything about emails (which are a fundamentally unsecurable medium)</p>
-</li><li><p>The web of trust, or key distribution really</p>
+</li></ul><ul><li><p>Any kind of signing (which is not a tooling problem, but a trust and key distribution problem, and to the extent that tools matter you should just use signify/minisign, and for keys we should probably use SSH ones)</p>
+</li></ul><ul><li><p>git commit signing, in particular (leave that to GitHub to solve) or releases and package signing (which is better solved at scale&nbsp;<a href="https://golang.org/design/25530-sumdb">by transparency</a>)</p>
+</li></ul><ul><li><p>Anything about emails (which are a fundamentally unsecurable medium)</p>
+</li></ul><ul><li><p>The web of trust, or key distribution really</p>
 </li></ul> <p><h1>Command line interface</h1></p>
 <p>Key generation</p>
 

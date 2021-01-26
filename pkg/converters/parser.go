@@ -11,23 +11,21 @@ import (
 type parser struct {
 	doc       *docs.Document
 	manifest  downloader.Manifest
-	bulletMap map[string]*Node
+	bulletMap map[string]map[int64]int
 }
 
 func Parse(doc *docs.Document, manifest downloader.Manifest) (*Node, error) {
 	origNode := &Node{}
-	node := origNode
 
 	parser := &parser{
 		doc:       doc,
 		manifest:  manifest,
-		bulletMap: map[string]*Node{},
+		bulletMap: map[string]map[int64]int{},
 	}
 
 	for _, elem := range doc.Body.Content {
-		var err error
-		if node, err = parser.parseElement(elem, node); err != nil {
-			return node, err
+		if err := parser.parseElement(elem, origNode); err != nil {
+			return nil, err
 		}
 	}
 
@@ -40,13 +38,14 @@ func Parse(doc *docs.Document, manifest downloader.Manifest) (*Node, error) {
 	return origNode, nil
 }
 
-func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) (*Node, error) {
+func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) error {
 	node := origNode
 
 	if elem.Paragraph != nil {
 		if elem.Paragraph.Bullet != nil {
 			listID := elem.Paragraph.Bullet.ListId
-			glyphType := p.doc.Lists[listID].ListProperties.NestingLevels[elem.Paragraph.Bullet.NestingLevel].GlyphType
+			nl := elem.Paragraph.Bullet.NestingLevel
+			glyphType := p.doc.Lists[listID].ListProperties.NestingLevels[nl].GlyphType
 
 			var listToken Token
 			var bulletToken Token
@@ -60,16 +59,20 @@ func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) (*No
 				bulletToken = TokenUnorderedBullet
 			}
 
-			if thisNode, ok := p.bulletMap[listID]; ok {
-				for i := thisNode.BulletNesting; i < elem.Paragraph.Bullet.NestingLevel+1; i++ {
-					thisNode = thisNode.append(&Node{Token: listToken, BulletNesting: i})
-				}
-				node = thisNode.append(&Node{Token: bulletToken, ListNumber: len(thisNode.Children) + 1, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
-			} else {
-				node = node.append(&Node{Token: listToken, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
-				p.bulletMap[listID] = node
-				node = node.append(&Node{Token: bulletToken, ListNumber: len(node.Children) + 1, BulletNesting: elem.Paragraph.Bullet.NestingLevel + 1})
+			m, ok := p.bulletMap[listID]
+			if !ok {
+				m = map[int64]int{}
+				p.bulletMap[listID] = m
 			}
+
+			m[nl]++
+			counter := m[nl]
+
+			for i := node.BulletNesting; i <= nl; i++ {
+				node = node.append(&Node{Token: listToken, BulletNesting: i})
+			}
+
+			node = node.append(&Node{Token: bulletToken, ListNumber: counter, BulletNesting: nl})
 		}
 
 		code := true
@@ -138,11 +141,11 @@ func (p *parser) parseElement(elem *docs.StructuralElement, origNode *Node) (*No
 
 	if elem.Table != nil {
 		if err := p.parseTable(elem.Table, node); err != nil {
-			return node, err
+			return err
 		}
 	}
 
-	return origNode, nil
+	return nil
 }
 
 func (p *parser) parseTable(table *docs.Table, node *Node) error {
@@ -153,8 +156,7 @@ func (p *parser) parseTable(table *docs.Table, node *Node) error {
 		for _, cell := range row.TableCells {
 			for _, elem := range cell.Content {
 				cellNode := rowNode.append(&Node{Token: TokenTableCell})
-				var err error
-				if cellNode, err = p.parseElement(elem, cellNode); err != nil {
+				if err := p.parseElement(elem, cellNode); err != nil {
 					return err
 				}
 			}
