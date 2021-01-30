@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"fmt"
@@ -10,15 +10,17 @@ import (
 	"github.com/erikh/gdocs-export/pkg/oauth2"
 	"github.com/erikh/gdocs-export/pkg/util"
 	_ "github.com/erikh/gdocs-export/ui/fs"
+
 	"github.com/labstack/echo/v4"
 	"github.com/rakyll/statik/fs"
 )
 
-func main() {
+// Start boots the UI
+func Start(addr string) error {
 	e := echo.New()
 	e.GET("/", serveIndex)
 	e.POST("/", convertURL)
-	e.Start("localhost:4000")
+	return e.Start(addr)
 }
 
 func serveIndex(c echo.Context) error {

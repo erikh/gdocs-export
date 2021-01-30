@@ -12,6 +12,7 @@ import (
 	"github.com/erikh/gdocs-export/pkg/downloader"
 	"github.com/erikh/gdocs-export/pkg/oauth2"
 	"github.com/erikh/gdocs-export/pkg/util"
+	"github.com/erikh/gdocs-export/ui"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/api/docs/v1"
 )
@@ -29,6 +30,13 @@ func main() {
 			ArgsUsage: "[credentials.json file]",
 			Aliases:   []string{"i", "creds"},
 			Action:    importCredentials,
+		},
+		{
+			Name:      "serve",
+			Usage:     "Serve a UI on [addr, or localhost:4000] that will convert documentation for you",
+			ArgsUsage: "[addr]",
+			Aliases:   []string{"s", "server"},
+			Action:    serve,
 		},
 		{
 			Name:      "fetch",
@@ -198,4 +206,16 @@ func importCredentials(ctx *cli.Context) error {
 	defer f.Close()
 
 	return oauth2.ImportCredentials(f)
+}
+
+func serve(ctx *cli.Context) error {
+	if ctx.Args().Len() > 1 {
+		return errors.New("invalid arguments; please see help")
+	}
+
+	if ctx.Args().Len() == 1 {
+		return ui.Start(ctx.Args().First())
+	}
+
+	return ui.Start("localhost:4000")
 }
