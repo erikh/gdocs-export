@@ -97,5 +97,7 @@ func convertURL(c echo.Context) error {
 		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%q", "output."+format))
 	}
 
+	ct += "; charset=utf-8"
+
 	return c.Blob(http.StatusOK, ct, []byte(res))
 }
