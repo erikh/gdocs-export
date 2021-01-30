@@ -1,8 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/erikh/gdocs-export/pkg/converters"
+	"github.com/erikh/gdocs-export/pkg/downloader"
+	"github.com/erikh/gdocs-export/pkg/oauth2"
+	"github.com/erikh/gdocs-export/pkg/util"
 	_ "github.com/erikh/gdocs-export/ui/fs"
 	"github.com/labstack/echo/v4"
 	"github.com/rakyll/statik/fs"
@@ -33,5 +38,49 @@ func serveIndex(c echo.Context) error {
 }
 
 func convertURL(c echo.Context) error {
-	return nil
+	params, err := c.FormParams()
+	if err != nil {
+		c.Logger().Error(err)
+		return err
+	}
+
+	url := params.Get("url")
+	format := params.Get("format")
+	preview := params.Get("preview") == "on"
+
+	docID, err := util.ParseDocsURL(url)
+	if err != nil {
+		c.Logger().Error(err)
+		return err
+	}
+
+	client := oauth2.GetClient()
+
+	doc, err := util.DownloadDoc(client, docID)
+	if err != nil {
+		c.Logger().Error(err)
+		return err
+	}
+
+	res, err := converters.Convert(format, doc, downloader.Manifest{})
+	if err != nil {
+		c.Logger().Error(err)
+		return err
+	}
+
+	var ct string
+	switch format {
+	case "html":
+		ct = "text/html"
+	case "md":
+		ct = "text/plain"
+	default:
+		return fmt.Errorf("invalid format")
+	}
+
+	if !preview {
+		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%q", "output."+format))
+	}
+
+	return c.Blob(http.StatusOK, ct, []byte(res))
 }
