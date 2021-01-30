@@ -4,24 +4,41 @@
     <title>Google Docs Converter</title>
   </head>
   <body>
+    <header>
+      <h1>gdocs-export web UI</h1>
+    </header>
     <main>
       <form method="POST">
-        <label name="url">URL of google doc</label>
-        <input type="text" name="url" />
-        <label name="format">Result format</label>
-        <select name="format">
-          <option value="html">HTML</option>
-          <option value="md">Markdown</option>
-        </select>
-        <label name="preview">Preview in Browser</label>
-        <input type="checkbox" name="preview" />
-        <input type="submit" name="action" value="Convert" />
-        <input
-          type="submit"
-          name="action"
-          value="Download all assets as .tar.gz"
-        />
+        <div>
+          <label name="url">URL of google doc</label>
+          <input type="text" name="url" size="100" />
+        </div>
+        <div>
+          <label name="format">Result format</label>
+          <select name="format">
+            <option value="html">HTML</option>
+            <option value="md">Markdown</option>
+          </select>
+        </div>
+        <div>
+          <label name="preview">Preview</label>
+          <input type="checkbox" name="preview" />
+        </div>
+        <div>
+          <input type="submit" name="action" value="Convert" />
+          <input
+            type="submit"
+            name="action"
+            value="Download all assets as .tar.gz"
+          />
+        </div>
       </form>
     </main>
+    <footer>
+      <div>
+        <a href="https://github.com/erikh/gdocs-export">gdocs-export</a> by Erik
+        Hollensbe
+      </div>
+    </footer>
   </body>
 </html>
