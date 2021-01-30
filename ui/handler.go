@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/erikh/gdocs-export/pkg/converters"
 	"github.com/erikh/gdocs-export/pkg/downloader"
@@ -47,7 +48,7 @@ func convertURL(c echo.Context) error {
 	url := params.Get("url")
 	format := params.Get("format")
 	preview := params.Get("preview") == "on"
-	download := params.Get("download") == "on"
+	download := strings.HasPrefix(params.Get("action"), "Download")
 
 	client := oauth2.GetClient()
 
