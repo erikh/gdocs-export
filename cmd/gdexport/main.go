@@ -4,16 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 
 	intCLI "github.com/erikh/gdocs-export/pkg/cli"
 	"github.com/erikh/gdocs-export/pkg/converters"
 	"github.com/erikh/gdocs-export/pkg/downloader"
 	"github.com/erikh/gdocs-export/pkg/oauth2"
+	"github.com/erikh/gdocs-export/pkg/util"
 	"github.com/urfave/cli/v2"
 	"google.golang.org/api/docs/v1"
 )
@@ -137,6 +135,13 @@ func fetch(ctx *cli.Context) error {
 		os.Exit(1)
 	}
 
+	docID, err := util.ParseDocsURL(ctx.Args().First())
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintln(os.Stderr, "Fetching docID", docID)
+
 	client := oauth2.GetClient()
 
 	srv, err := docs.New(client)
@@ -144,45 +149,21 @@ func fetch(ctx *cli.Context) error {
 		return fmt.Errorf("Unable to retrieve Docs client: %v", err)
 	}
 
-	u, err := url.Parse(ctx.Args().First())
-	if err != nil {
-		return fmt.Errorf("Unable to parse url: %v", err)
-	}
-
-	parts := strings.Split(u.Path, "/")
-	if len(parts) < 4 {
-		return fmt.Errorf("Invalid URL, cannot parse docID properly")
-	}
-
-	docID := parts[3]
-
-	fmt.Fprintln(os.Stderr, "Fetching docID", docID)
-
 	doc, err := srv.Documents.Get(docID).Do()
 	if err != nil {
 		return fmt.Errorf("Unable to retrieve data from document: %v", err)
 	}
 
-	a, err := downloader.New(client)
-	if err != nil {
-		return fmt.Errorf("%v", err)
-	}
+	var manifest downloader.Manifest
 
 	if ctx.Bool("download") {
 		dl := ctx.String("assets-dir")
 		fmt.Fprintf(os.Stderr, "Downloading assets to %q (this can take a bit)\n", dl)
 
-		if err := a.Download(dl, doc); err != nil {
-			return fmt.Errorf("trouble downloading to %q: %v", dl, err)
-		}
-
-		manifest, err := a.ManifestJSON()
+		var err error
+		manifest, err = util.DownloadAssets(client, doc, dl, true)
 		if err != nil {
-			return fmt.Errorf("Error marshalling manifest: %v", err)
-		}
-
-		if err := ioutil.WriteFile(filepath.Join(dl, "manifest.json"), manifest, 0600); err != nil {
-			return fmt.Errorf("Error writing manifest to %q: %v", dl, err)
+			return err
 		}
 	}
 
@@ -194,7 +175,7 @@ func fetch(ctx *cli.Context) error {
 
 		fmt.Println(string(content))
 	} else {
-		res, err := converters.Convert(ctx.String("convert"), doc, a.Manifest())
+		res, err := converters.Convert(ctx.String("convert"), doc, manifest)
 		if err != nil {
 			return err
 		}
