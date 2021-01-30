@@ -47,14 +47,27 @@ func convertURL(c echo.Context) error {
 	url := params.Get("url")
 	format := params.Get("format")
 	preview := params.Get("preview") == "on"
+	download := params.Get("download") == "on"
+
+	client := oauth2.GetClient()
+
+	if download {
+		tar, err := util.MakeTarFromGDoc(client, url, format)
+		if err != nil {
+			c.Logger().Error(err)
+			return err
+		}
+		defer tar.Close()
+
+		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%q", "output.tar.gz"))
+		return c.Stream(http.StatusOK, "application/gzip", tar)
+	}
 
 	docID, err := util.ParseDocsURL(url)
 	if err != nil {
 		c.Logger().Error(err)
 		return err
 	}
-
-	client := oauth2.GetClient()
 
 	doc, err := util.DownloadDoc(client, docID)
 	if err != nil {
@@ -75,6 +88,7 @@ func convertURL(c echo.Context) error {
 	case "md":
 		ct = "text/plain"
 	default:
+		c.Logger().Error("invalid format")
 		return fmt.Errorf("invalid format")
 	}
 
