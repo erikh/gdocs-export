@@ -1,0 +1,22 @@
+<!DOCTYPE html5>
+<html>
+  <head>
+    <title>Google Docs Converter</title>
+  </head>
+  <body>
+    <main>
+      <form method="POST">
+        <label name="url">URL of google doc</label>
+        <input type="text" name="url" />
+        <label name="format">Result format</label>
+        <select name="format">
+          <option value="html">HTML</option>
+          <option value="md">Markdown</option>
+        </select>
+        <label name="preview">Preview in Browser</label>
+        <input type="checkbox" name="preview" />
+        <input type="submit" value="Convert" />
+      </form>
+    </main>
+  </body>
+</html>

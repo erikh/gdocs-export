@@ -6,7 +6,9 @@ require (
 	cloud.google.com/go v0.75.0 // indirect
 	github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
+	github.com/labstack/echo/v4 v4.1.17
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/rakyll/statik v0.1.7
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/urfave/cli/v2 v2.3.0
